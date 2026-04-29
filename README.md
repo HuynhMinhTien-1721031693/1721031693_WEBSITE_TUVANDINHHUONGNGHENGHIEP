@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Career Guidance Platform
 
-## Getting Started
+Full-stack web app for career orientation:
 
-First, run the development server:
+- Frontend: Next.js (React) + Tailwind CSS
+- Backend: Node.js + Express
+- Database: MongoDB (Mongoose)
+- AI: OpenAI API
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Project Structure
+
+```txt
+career-guidance/
+  app/                  # Next.js App Router frontend
+  backend/              # Express API server
+    src/config/         # MongoDB connection
+    src/models/         # Mongoose models
+    src/routes/         # API endpoints
+    src/services/       # OpenAI integration
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup Project
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 1) Install dependencies
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+npm install --prefix backend
+```
 
-## Learn More
+### 2) Configure environment variables
 
-To learn more about Next.js, take a look at the following resources:
+Create frontend env:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+cp .env.example .env.local
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Create backend env:
 
-## Deploy on Vercel
+```bash
+cp backend/.env.example backend/.env
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Required variables:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `NEXT_PUBLIC_API_BASE_URL` (example: `http://localhost:4000`)
+- `MONGODB_URI`
+- `OPENAI_API_KEY` (or Gemini key if you adapt AI service)
+- `OPENAI_MODEL` (optional)
+
+### 3) Run development server
+
+Run frontend + backend together:
+
+```bash
+npm run dev:all
+```
+
+Or run separately:
+
+- Frontend: `npm run dev`
+- Backend: `npm run dev --prefix backend`
+
+App URLs:
+
+- Frontend: [http://localhost:3000](http://localhost:3000)
+- Backend API: [http://localhost:4000](http://localhost:4000)
+
+## API Endpoints (Backend)
+
+- `GET /api/health` - health check
+- `POST /api/career-advice` - generate AI career advice
+- `GET /api/history` - latest 20 advice records
+
+Example request body for `/api/career-advice`:
+
+```json
+{
+  "message": "Em thích công nghệ, giao tiếp tốt nhưng chưa biết chọn ngành nào"
+}
+```
