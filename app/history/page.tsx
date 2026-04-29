@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { authFetch, getAuthToken } from "@/lib/auth-client";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
 type AdviceHistory = {
   _id: string;
@@ -15,10 +15,8 @@ type AdviceHistory = {
 
 type AssessmentHistory = {
   _id: string;
-  type: string;
-  code: string;
-  summary: string;
-  careers: string[];
+  dominantType: string;
+  suggestedCareers: string[];
   createdAt: string;
 };
 
@@ -38,8 +36,8 @@ export default function HistoryPage() {
 
       try {
         const [chatRes, assessmentRes] = await Promise.all([
-          authFetch(`${API_BASE_URL}/api/history`),
-          authFetch(`${API_BASE_URL}/api/assessments`),
+          authFetch(`${BASE_URL}/api/history`),
+          authFetch(`${BASE_URL}/api/assessment/my`),
         ]);
 
         const chatPayload = await chatRes.json();
@@ -104,9 +102,9 @@ export default function HistoryPage() {
                   {assessmentHistory.map((item) => (
                     <div key={item._id} className="rounded-xl bg-slate-50 p-3 text-sm text-slate-700">
                       <p className="font-medium">
-                        {item.type.toUpperCase()} - {item.code || "N/A"}
+                        RIASEC - {item.dominantType || "N/A"}
                       </p>
-                      <p className="mt-1">{item.summary}</p>
+                      <p className="mt-1">{(item.suggestedCareers || []).join(", ")}</p>
                       <p className="mt-1 text-xs text-slate-500">{new Date(item.createdAt).toLocaleString("vi-VN")}</p>
                     </div>
                   ))}

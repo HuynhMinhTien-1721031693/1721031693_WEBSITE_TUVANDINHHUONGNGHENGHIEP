@@ -6,24 +6,28 @@ import adviceRouter from "./routes/advice.js";
 import assessmentRouter from "./routes/assessment.js";
 import authRouter from "./routes/auth.js";
 import historyRouter from "./routes/history.js";
-import { requireAuth as authMiddleware } from "./middleware/auth.js";
 
 dotenv.config();
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true, service: "career-guidance-backend" });
 });
 
-app.use("/api", adviceRouter);
 app.use("/api/auth", authRouter);
-app.use("/api/assessment", authMiddleware, assessmentRouter);
 app.use("/api/history", historyRouter);
+app.use("/api/assessment", assessmentRouter);
+app.use("/api", adviceRouter);
 
 connectDatabase()
   .then(() => {

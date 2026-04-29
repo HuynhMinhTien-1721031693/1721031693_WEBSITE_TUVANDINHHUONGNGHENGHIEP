@@ -1,5 +1,22 @@
 import mongoose from "mongoose";
 
+const answerSchema = new mongoose.Schema(
+  {
+    questionId: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    value: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 5,
+    },
+  },
+  { _id: false },
+);
+
 const assessmentSchema = new mongoose.Schema(
   {
     userId: {
@@ -8,36 +25,39 @@ const assessmentSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    type: {
-      type: String,
-      enum: ["mbti", "holland", "disc", "custom"],
+    answers: {
+      type: [answerSchema],
+      default: [],
+    },
+    riasecScores: {
+      type: new mongoose.Schema(
+        {
+          R: { type: Number, default: 0 },
+          I: { type: Number, default: 0 },
+          A: { type: Number, default: 0 },
+          S: { type: Number, default: 0 },
+          E: { type: Number, default: 0 },
+          C: { type: Number, default: 0 },
+        },
+        { _id: false },
+      ),
       required: true,
-      default: "custom",
     },
-    code: {
+    dominantType: {
       type: String,
+      required: true,
       trim: true,
-      default: "",
     },
-    summary: {
-      type: String,
-      trim: true,
-      default: "",
-    },
-    scores: {
-      type: Object,
-      default: {},
-    },
-    careers: {
+    suggestedCareers: {
       type: [String],
       default: [],
     },
-    rawAnswers: {
-      type: Object,
-      default: {},
+    createdAt: {
+      type: Date,
+      default: Date.now,
     },
   },
-  { timestamps: true },
+  { timestamps: false },
 );
 
 export const Assessment =

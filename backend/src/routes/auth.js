@@ -16,7 +16,7 @@ function signToken(user) {
     {
       userId: String(user._id),
       email: user.email,
-      fullName: user.fullName,
+      name: user.name,
     },
     secret,
     { expiresIn: "7d" },
@@ -25,14 +25,14 @@ function signToken(user) {
 
 router.post("/register", async (req, res) => {
   try {
-    const fullName = String(req.body?.fullName || "").trim();
+    const name = String(req.body?.name || req.body?.fullName || "").trim();
     const email = String(req.body?.email || "")
       .trim()
       .toLowerCase();
     const password = String(req.body?.password || "");
 
-    if (!fullName || !email || !password) {
-      return res.status(400).json({ error: "Vui lòng nhập đầy đủ họ tên, email và mật khẩu." });
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: "Vui lòng nhập đầy đủ tên, email và mật khẩu." });
     }
 
     if (password.length < 6) {
@@ -44,13 +44,13 @@ router.post("/register", async (req, res) => {
       return res.status(409).json({ error: "Email đã được sử dụng." });
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
-    const user = await User.create({ fullName, email, passwordHash });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await User.create({ name, email, password: hashedPassword });
     const token = signToken(user);
 
     return res.status(201).json({
       token,
-      user: { id: user._id, fullName: user.fullName, email: user.email },
+      user: { id: user._id, name: user.name, email: user.email },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Không thể đăng ký lúc này.";
@@ -74,7 +74,10 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Email hoặc mật khẩu không đúng." });
     }
 
-    const matched = await bcrypt.compare(password, user.passwordHash);
+    // Compatible with legacy documents that still store passwordHash.
+    const matched = user.password
+      ? await user.comparePassword(password)
+      : await bcrypt.compare(password, user.passwordHash || "");
     if (!matched) {
       return res.status(401).json({ error: "Email hoặc mật khẩu không đúng." });
     }
@@ -82,7 +85,7 @@ router.post("/login", async (req, res) => {
     const token = signToken(user);
     return res.json({
       token,
-      user: { id: user._id, fullName: user.fullName, email: user.email },
+      user: { id: user._id, name: user.name || user.fullName, email: user.email },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Không thể đăng nhập lúc này.";
@@ -92,11 +95,11 @@ router.post("/login", async (req, res) => {
 
 router.get("/me", requireAuth, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select("_id fullName email").lean();
+    const user = await User.findById(req.user.userId || req.user._id).select("_id name email").lean();
     if (!user) {
       return res.status(404).json({ error: "Không tìm thấy người dùng." });
     }
-    return res.json({ user: { id: user._id, fullName: user.fullName, email: user.email } });
+    return res.json({ user: { id: user._id, name: user.name, email: user.email } });
   } catch {
     return res.status(500).json({ error: "Không thể tải hồ sơ người dùng." });
   }

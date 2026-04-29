@@ -1,7 +1,10 @@
 import jwt from "jsonwebtoken";
 
 function parseTokenFromHeader(header = "") {
-  return header.startsWith("Bearer ") ? header.slice(7) : "";
+  if (typeof header !== "string") return "";
+  const [scheme, token] = header.split(" ");
+  if (scheme !== "Bearer" || !token) return "";
+  return token.trim();
 }
 
 function verifyToken(token) {
@@ -20,21 +23,16 @@ function verifyToken(token) {
 export function requireAuth(req, res, next) {
   const header = req.headers.authorization || "";
   const token = parseTokenFromHeader(header);
-  const secret = process.env.JWT_SECRET;
-
-  if (!secret) {
-    return res.status(500).json({ error: "Thiếu JWT_SECRET trong biến môi trường backend." });
-  }
 
   if (!token) {
-    return res.status(401).json({ error: "Bạn cần đăng nhập để thực hiện thao tác này." });
+    return res.status(401).json({ error: "Unauthorized." });
   }
 
   try {
     req.user = verifyToken(token);
     return next();
   } catch {
-    return res.status(401).json({ error: "Token không hợp lệ hoặc đã hết hạn." });
+    return res.status(401).json({ error: "Unauthorized." });
   }
 }
 
@@ -50,11 +48,7 @@ export function optionalAuth(req, res, next) {
   try {
     req.user = verifyToken(token);
     return next();
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "";
-    if (message.includes("JWT_SECRET")) {
-      return res.status(500).json({ error: message });
-    }
-    return res.status(401).json({ error: "Token không hợp lệ hoặc đã hết hạn." });
+  } catch {
+    return res.status(401).json({ error: "Unauthorized." });
   }
 }

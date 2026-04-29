@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getToken } from "@/lib/auth";
+import { getToken } from "@/lib/auth-client";
+import withAuthGuard from "@/components/AuthGuard";
 
 type RiasecGroup = "R" | "I" | "A" | "S" | "E" | "C";
 
@@ -67,15 +68,16 @@ const QUESTIONS: Question[] = (Object.keys(QUESTION_SETS) as RiasecGroup[]).flat
 );
 
 const SCALE_OPTIONS = [
-  { value: 1, label: "Không phù hợp" },
-  { value: 2, label: "Ít phù hợp" },
-  { value: 3, label: "Khá phù hợp" },
-  { value: 4, label: "Rất phù hợp" },
+  { value: 1, label: "Hoàn toàn không thích" },
+  { value: 2, label: "Không thích" },
+  { value: 3, label: "Bình thường" },
+  { value: 4, label: "Thích" },
+  { value: 5, label: "Rất thích" },
 ];
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
-export default function QuizPage() {
+function QuizPage() {
   const router = useRouter();
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -114,7 +116,7 @@ export default function QuizPage() {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/assessment`, {
+      const response = await fetch(`${BASE_URL}/api/assessment`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -124,6 +126,7 @@ export default function QuizPage() {
           {
             answers: QUESTIONS.map((question) => ({
               questionId: question.id,
+              tag: question.group,
               value: answers[question.id],
             })),
           },
@@ -242,14 +245,11 @@ export default function QuizPage() {
             <button
               type="button"
               onClick={() => {
-                if (!currentAnswer) {
-                  setError("Vui lòng chọn 1 đáp án trước khi sang câu tiếp theo.");
-                  return;
-                }
                 setError(null);
                 setCurrentIndex((prev) => Math.min(totalQuestions - 1, prev + 1));
               }}
-              className="btn-primary px-5 py-2 text-sm font-semibold"
+              disabled={!currentAnswer}
+              className="btn-primary px-5 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
             >
               Tiếp
             </button>
@@ -268,3 +268,5 @@ export default function QuizPage() {
     </main>
   );
 }
+
+export default withAuthGuard(QuizPage);

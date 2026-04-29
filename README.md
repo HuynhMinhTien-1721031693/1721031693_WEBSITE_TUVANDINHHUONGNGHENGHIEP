@@ -1,109 +1,96 @@
-# Career Guidance Platform
+# CareerPath VN
 
-Full-stack web app for career orientation:
+Nền tảng tư vấn định hướng nghề nghiệp cho học sinh/sinh viên Việt Nam.
 
-- Frontend: Next.js (React) + Tailwind CSS
-- Backend: Node.js + Express
-- Database: MongoDB (Mongoose)
-- AI: OpenAI API
+- Frontend: Next.js App Router + Tailwind CSS
+- Backend: Express + Mongoose
+- Database: MongoDB
+- AI: OpenAI
 
-## Project Structure
+## Cấu trúc dự án
 
 ```txt
 career-guidance/
-  app/                  # Next.js App Router frontend
-  backend/              # Express API server
-    src/config/         # MongoDB connection
+  app/                  # Next.js frontend
+  components/           # shared UI components
+  lib/                  # client helpers
+  backend/              # Express API
+    src/config/         # DB config
     src/models/         # Mongoose models
-    src/routes/         # API endpoints
-    src/services/       # OpenAI integration
+    src/routes/         # API routes
+    src/services/       # OpenAI service
 ```
 
-## Setup Project
+## Cài đặt đầy đủ
 
-### 1) Install dependencies
+### 1) Cài dependencies
 
 ```bash
 npm install
 npm install --prefix backend
 ```
 
-### 2) Configure environment variables
-
-Create frontend env:
+### 2) Tạo file môi trường
 
 ```bash
 cp .env.example .env.local
-```
-
-Create backend env:
-
-```bash
 cp backend/.env.example backend/.env
 ```
 
-Required variables:
+Nội dung bắt buộc:
 
-- `NEXT_PUBLIC_API_BASE_URL` (example: `http://localhost:4000`)
-- `MONGODB_URI`
-- `OPENAI_API_KEY` (or Gemini key if you adapt AI service)
-- `OPENAI_MODEL` (optional)
+`/.env.example`
 
-### 3) Run development server
+```env
+NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
+```
 
-Run frontend + backend together:
+`/backend/.env.example`
+
+```env
+MONGODB_URI=mongodb://localhost:27017/career-guidance
+JWT_SECRET=your-secret-key-here
+OPENAI_API_KEY=your-openai-key
+PORT=4000
+```
+
+### 3) Chạy dự án
 
 ```bash
 npm run dev:all
 ```
 
-Or run separately:
+Hoặc chạy riêng:
 
 - Frontend: `npm run dev`
 - Backend: `npm run dev --prefix backend`
 
-App URLs:
+## URL local
 
 - Frontend: [http://localhost:3000](http://localhost:3000)
-- Backend API: [http://localhost:4000](http://localhost:4000)
+- Backend: [http://localhost:4000](http://localhost:4000)
 
-## API Endpoints (Backend)
+## API chính
 
-- Public:
-  - `GET /api/health` - health check
-  - `POST /api/auth/register` - register new user
-  - `POST /api/auth/login` - login and receive JWT
-- Protected (require `Authorization: Bearer <token>`):
-  - `GET /api/auth/me` - get current user profile
-  - `POST /api/career-advice` - generate AI career advice and save history
-  - `GET /api/history` - latest 20 advice records of current user
-  - `POST /api/test-results` - save test result of current user
-  - `GET /api/test-results` - list test result history of current user
-  - `POST /api/assessments` - save assessment detail of current user
-  - `GET /api/assessments` - list assessment history of current user
+Public:
 
-Example request body for `/api/career-advice`:
+- `GET /api/health`
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/career-advice`
 
-```json
-{
-  "message": "Em thích công nghệ, giao tiếp tốt nhưng chưa biết chọn ngành nào"
-}
-```
+Protected (`Authorization: Bearer <token>`):
 
-## Feature Checklist
+- `GET /api/auth/me`
+- `POST /api/assessment`
+- `GET /api/assessment/my`
+- `GET /api/history`
+- `POST /api/test-results`
+- `GET /api/test-results`
 
-Basic features:
+## Lưu ý frontend
 
-- Trang giới thiệu ngành nghề / lĩnh vực: `/careers`
-- Bài test trắc nghiệm tính cách / năng lực (RIASEC + MBTI mini): `/quiz`
-- Hiển thị kết quả và gợi ý nghề phù hợp: tại trang `/quiz` và `/dashboard`
-- Đăng ký / đăng nhập tài khoản (JWT): `/auth`
-- Lưu lịch sử kết quả: localStorage + MongoDB (`/api/test-results`) khi đã đăng nhập (phụ thuộc trạng thái auth)
-
-Advanced features:
-
-- Đặt lịch tư vấn 1-1 với chuyên gia: `/booking` (form khởi tạo, chưa hoàn chỉnh)
-- Blog xu hướng nghề nghiệp: `/blog`
-- Tìm kiếm và lọc ngành nghề: trong `/careers`
-- Dashboard quản trị (admin): `/admin` (khung quản trị, chỉ là skeleton)
-- Giao diện responsive: các trang dùng Tailwind grid/flex theo breakpoints
+- Tất cả API call dùng:
+  - `const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000"`
+- Các API protected phải gửi:
+  - `Authorization: Bearer ${localStorage.getItem("token")}`

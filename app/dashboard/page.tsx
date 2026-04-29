@@ -3,21 +3,16 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import withAuthGuard from "@/components/AuthGuard";
-import { getToken } from "@/lib/auth";
+import { clearAuth, getToken, getUser } from "@/lib/auth-client";
 
 type TraitKey = "R" | "I" | "A" | "S" | "E" | "C";
 
 type AssessmentItem = {
   _id?: string;
-  id?: string;
   createdAt?: string;
-  result?: {
-    type?: string;
-    scores?: Record<string, number>;
-    suggestedCareers?: string[];
-  };
-  scores?: Record<string, number>;
-  careers?: string[];
+  riasecScores?: Partial<Record<TraitKey, number>>;
+  dominantType?: TraitKey;
+  suggestedCareers?: string[];
 };
 
 type HistoryItem = {
@@ -34,8 +29,7 @@ type DashboardUser = {
   email: string;
 };
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
 const TRAIT_META: Array<{ key: TraitKey; label: string; colorClass: string }> = [
   { key: "R", label: "Realistic", colorClass: "bg-sky-500" },
@@ -50,54 +44,22 @@ function createEmptyScores(): Record<TraitKey, number> {
   return { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
 }
 
-function decodeTokenPayload(token: string): Record<string, unknown> | null {
-  const parts = token.split(".");
-  if (parts.length < 2) return null;
-
-  try {
-    const payload = parts[1]
-      .replace(/-/g, "+")
-      .replace(/_/g, "/")
-      .padEnd(Math.ceil(parts[1].length / 4) * 4, "=");
-    const json = atob(payload);
-    return JSON.parse(json) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
-function normalizeRiasecScores(
-  rawScores: Record<string, number> | undefined,
-): Record<TraitKey, number> {
+function normalizeRiasecScores(rawScores?: Partial<Record<TraitKey, number>>) {
   const scores = createEmptyScores();
   if (!rawScores) return scores;
-
-  for (const [key, value] of Object.entries(rawScores)) {
-    const normalized = key.trim().toUpperCase();
-    const numericValue = Number(value);
-    if (!Number.isFinite(numericValue)) continue;
-
-    if (normalized in scores) {
-      scores[normalized as TraitKey] = numericValue;
-      continue;
-    }
-
-    if (normalized === "REALISTIC") scores.R = numericValue;
-    if (normalized === "INVESTIGATIVE") scores.I = numericValue;
-    if (normalized === "ARTISTIC") scores.A = numericValue;
-    if (normalized === "SOCIAL") scores.S = numericValue;
-    if (normalized === "ENTERPRISING") scores.E = numericValue;
-    if (normalized === "CONVENTIONAL") scores.C = numericValue;
+  for (const key of ["R", "I", "A", "S", "E", "C"] as TraitKey[]) {
+    const value = Number(rawScores[key] || 0);
+    scores[key] = Number.isFinite(value) ? value : 0;
   }
-
   return scores;
 }
 
-function toCareerMatchList(careers: string[]): Array<{ name: string; matchPercent: number }> {
-  return careers.slice(0, 6).map((name, index) => ({
-    name,
-    matchPercent: Math.max(70, 95 - index * 6),
-  }));
+function getPersonalityTypeName(scores: Record<TraitKey, number>): string {
+  const sorted = Object.entries(scores)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 2)
+    .map(([key]) => TRAIT_META.find((item) => item.key === key)?.label || key);
+  return sorted.join(" - ");
 }
 
 function DashboardPage() {
@@ -105,47 +67,22 @@ function DashboardPage() {
     name: "Người dùng",
     email: "user@example.com",
   });
+  const [personalityName, setPersonalityName] = useState("Đang cập nhật");
   const [riasecScores, setRiasecScores] = useState<Record<TraitKey, number>>(
     createEmptyScores(),
   );
-  const [suggestedCareers, setSuggestedCareers] = useState<
-    Array<{ name: string; matchPercent: number }>
-  >([]);
+  const [suggestedCareers, setSuggestedCareers] = useState<string[]>([]);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loadingAssessment, setLoadingAssessment] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const rawUser = localStorage.getItem("career_guidance_user");
-    if (rawUser) {
-      try {
-        const parsed = JSON.parse(rawUser) as {
-          fullName?: string;
-          name?: string;
-          email?: string;
-        };
-        setUser({
-          name: parsed.fullName || parsed.name || "Người dùng",
-          email: parsed.email || "user@example.com",
-        });
-        return;
-      } catch {
-        // ignore invalid user cache
-      }
-    }
-
-    const token = getToken() || "";
-    if (!token) return;
-
-    const payload = decodeTokenPayload(token);
-    if (!payload) return;
-
+    const parsed = getUser();
+    if (!parsed) return;
     setUser({
-      name: String(payload.fullName || payload.name || "Người dùng"),
-      email: String(payload.email || "user@example.com"),
+      name: parsed.name || parsed.fullName || "Người dùng",
+      email: parsed.email || "user@example.com",
     });
   }, []);
 
@@ -161,8 +98,8 @@ function DashboardPage() {
 
       try {
         const [assessmentResponse, historyResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/assessment/history`, { headers }),
-          fetch(`${API_BASE_URL}/api/history`, { headers }),
+          fetch(`${BASE_URL}/api/assessment/my`, { headers }),
+          fetch(`${BASE_URL}/api/history`, { headers }),
         ]);
 
         if (assessmentResponse.ok) {
@@ -171,15 +108,12 @@ function DashboardPage() {
           const latest = list[0];
 
           if (latest) {
-            const rawScores = latest.result?.scores || latest.scores;
-            const normalizedScores = normalizeRiasecScores(rawScores);
+            const normalizedScores = normalizeRiasecScores(latest.riasecScores);
             setRiasecScores(normalizedScores);
-
-            const careers =
-              latest.result?.suggestedCareers ||
-              latest.careers ||
-              [];
-            setSuggestedCareers(toCareerMatchList(careers));
+            setPersonalityName(getPersonalityTypeName(normalizedScores));
+            setSuggestedCareers(
+              Array.isArray(latest.suggestedCareers) ? latest.suggestedCareers.slice(0, 5) : [],
+            );
           }
         } else {
           const assessmentError = (await assessmentResponse.json().catch(() => null)) as
@@ -211,29 +145,6 @@ function DashboardPage() {
     void loadDashboardData();
   }, []);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const raw = localStorage.getItem("latest_quiz_result");
-    if (!raw) return;
-
-    try {
-      const parsed = JSON.parse(raw) as {
-        scores?: Record<string, number>;
-        careers?: string[];
-        suggestedCareers?: string[];
-      };
-      if (parsed.scores && Object.keys(parsed.scores).length > 0) {
-        setRiasecScores(normalizeRiasecScores(parsed.scores));
-      }
-      const fallbackCareers = parsed.careers || parsed.suggestedCareers || [];
-      if (fallbackCareers.length > 0) {
-        setSuggestedCareers(toCareerMatchList(fallbackCareers));
-      }
-    } catch {
-      // ignore invalid cache
-    }
-  }, []);
-
   const maxScore = Math.max(...Object.values(riasecScores), 1);
   const initials = user.name
     .split(" ")
@@ -241,6 +152,12 @@ function DashboardPage() {
     .slice(-2)
     .map((word) => word[0]?.toUpperCase())
     .join("");
+  const traitPercent = (value: number) => Math.round((value / maxScore) * 100);
+
+  function handleLogout() {
+    clearAuth();
+    window.location.href = "/auth/login";
+  }
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-6xl space-y-6 px-4 py-8">
@@ -258,7 +175,14 @@ function DashboardPage() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Link href="/assessment" className="btn-primary px-4 py-2 text-sm font-semibold">
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-lg border border-[#0F2044]/20 px-4 py-2 text-sm font-semibold text-[#0F2044] hover:bg-slate-50"
+            >
+              Đăng xuất
+            </button>
+            <Link href="/quiz" className="btn-primary px-4 py-2 text-sm font-semibold">
               Làm lại bài test
             </Link>
             <Link href="/" className="btn-accent px-4 py-2 text-sm font-semibold">
@@ -270,20 +194,25 @@ function DashboardPage() {
 
       <section className="app-card p-6 md:p-7">
         <h2 className="text-xl font-semibold text-[#0F2044]">Kết quả RIASEC mới nhất</h2>
+        <p className="mt-2 inline-flex rounded-full bg-[#F5A623]/20 px-3 py-1 text-sm font-semibold text-[#0F2044]">
+          {personalityName}
+        </p>
         {loadingAssessment ? (
           <p className="mt-3 text-sm text-slate-500">Đang tải kết quả RIASEC...</p>
         ) : (
           <div className="mt-4 space-y-4">
             {TRAIT_META.map((trait) => {
               const value = riasecScores[trait.key];
-              const percent = Math.round((value / maxScore) * 100);
+              const percent = traitPercent(value);
               return (
                 <div key={trait.key}>
                   <div className="mb-1 flex items-center justify-between text-sm">
                     <span className="font-medium text-slate-700">
                       {trait.label}
                     </span>
-                    <span className="font-semibold text-slate-600">{value}</span>
+                    <span className="rounded-full bg-[#0F2044]/10 px-2 py-0.5 font-semibold text-[#0F2044]">
+                      {percent}%
+                    </span>
                   </div>
                   <div className="h-3 rounded-full bg-gray-100">
                     <div
@@ -302,15 +231,17 @@ function DashboardPage() {
         <h2 className="text-xl font-semibold text-[#0F2044]">Danh sách nghề gợi ý</h2>
         {suggestedCareers.length > 0 ? (
           <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {suggestedCareers.map((career) => (
+            {suggestedCareers.map((career, index) => (
               <article
-                key={career.name}
-                className="rounded-xl border border-emerald-100 bg-emerald-50 p-4"
+                key={`${career}-${index}`}
+                className="rounded-xl border border-[#0F2044]/10 bg-white p-4"
               >
-                <p className="font-semibold text-emerald-900">{career.name}</p>
-                <p className="mt-1 text-sm font-medium text-emerald-700">
-                  Độ phù hợp: {career.matchPercent}%
-                </p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-semibold text-[#0F2044]">{career}</p>
+                  <span className="rounded-full bg-[#F5A623]/20 px-2 py-0.5 text-xs font-semibold text-[#0F2044]">
+                    Phù hợp
+                  </span>
+                </div>
               </article>
             ))}
           </div>

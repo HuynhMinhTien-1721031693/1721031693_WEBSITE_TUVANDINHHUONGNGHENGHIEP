@@ -2,7 +2,7 @@
 
 import { ComponentType, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { isLoggedIn } from "@/lib/auth";
+import { isLoggedIn } from "@/lib/auth-client";
 
 export default function withAuthGuard<P extends object>(
   WrappedComponent: ComponentType<P>,

@@ -6,7 +6,7 @@ import { assessmentById, assessmentDefinitions, AssessmentType } from "@/lib/ass
 import { AnswerMap, AssessmentResult, evaluateAssessment } from "@/lib/assessment/engine";
 import { authFetch } from "@/lib/auth-client";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
 export default function AssessmentPage() {
   const [activeTestId, setActiveTestId] = useState<AssessmentType>("mbti");
@@ -35,18 +35,14 @@ export default function AssessmentPage() {
     setError(null);
 
     try {
-      const response = await authFetch(`${API_BASE_URL}/api/assessments`, {
+      const response = await authFetch(`${BASE_URL}/api/assessment`, {
         method: "POST",
         body: JSON.stringify({
-          type: definition.id,
-          code: evaluated.code,
-          summary: evaluated.summary,
-          scores: evaluated.highlightTraits.reduce<Record<string, number>>((acc, item) => {
-            acc[item] = 1;
-            return acc;
-          }, {}),
-          careers: evaluated.careers.map((item) => item.name),
-          rawAnswers: answers,
+          answers: definition.questions.map((item, index) => ({
+            questionId: item.id,
+            tag: "R",
+            value: answers[item.id] ? 5 : (index % 5) + 1,
+          })),
         }),
       });
 
