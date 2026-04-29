@@ -92,7 +92,7 @@ router.post("/auth/login", async (req, res) => {
 
 router.get("/auth/me", requireAuth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId).select("_id fullName email").lean();
+    const user = await User.findById(req.user._id).select("_id fullName email").lean();
     if (!user) {
       return res.status(404).json({ error: "Không tìm thấy người dùng." });
     }

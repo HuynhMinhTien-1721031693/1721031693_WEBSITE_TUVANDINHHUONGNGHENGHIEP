@@ -2,6 +2,12 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import {
+  authFetch,
+  clearAuthSession,
+  getAuthToken,
+  getAuthUser,
+} from "@/lib/auth-client";
 
 type AdviceResult = {
   careerSuggestions: string[];
@@ -38,6 +44,12 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AdviceResult | null>(null);
+  const [authenticated, setAuthenticated] = useState<boolean>(() =>
+    typeof window !== "undefined" ? Boolean(getAuthToken()) : false,
+  );
+  const [authUser, setAuthUser] = useState(() =>
+    typeof window !== "undefined" ? getAuthUser() : null,
+  );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -47,11 +59,8 @@ export default function HomePage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/career-advice`, {
+      const response = await authFetch(`${API_BASE_URL}/api/career-advice`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({ message: input }),
       });
       const payload = await response.json();
@@ -85,7 +94,7 @@ export default function HomePage() {
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <Link
-              href="/quiz"
+              href="/assessment"
               className="rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
               Bắt đầu miễn phí
@@ -97,12 +106,30 @@ export default function HomePage() {
               Xem dashboard mẫu
             </Link>
             <Link
-              href="/auth"
+              href={authenticated ? "/history" : "/login"}
               className="rounded-xl border border-blue-300 px-6 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
             >
-              Đăng nhập / Đăng ký
+              {authenticated ? "Lịch sử của tôi" : "Đăng nhập / Đăng ký"}
             </Link>
+            {authenticated && (
+              <button
+                onClick={() => {
+                  clearAuthSession();
+                  setAuthenticated(false);
+                  setAuthUser(null);
+                }}
+                className="rounded-xl border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+              >
+                Đăng xuất
+              </button>
+            )}
           </div>
+          {authenticated && authUser && (
+            <p className="mt-4 text-sm text-slate-600">
+              Đang đăng nhập: <span className="font-semibold">{authUser.fullName}</span>{" "}
+              ({authUser.email})
+            </p>
+          )}
         </section>
 
         <section className="grid gap-4 md:grid-cols-3">

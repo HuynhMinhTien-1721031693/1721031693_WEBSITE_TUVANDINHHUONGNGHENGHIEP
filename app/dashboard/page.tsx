@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { authFetch } from "@/lib/auth-client";
+import { getAuthToken, getAuthUser } from "@/lib/auth-client";
 
 type QuizResult = {
   topTrait: string;
@@ -45,6 +47,12 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4
 const scoreColors = ["bg-blue-500", "bg-emerald-500", "bg-violet-500", "bg-amber-500", "bg-cyan-500", "bg-fuchsia-500"];
 
 export default function DashboardPage() {
+  const [authUser] = useState(() =>
+    typeof window !== "undefined" ? getAuthUser() : null,
+  );
+  const [hasToken] = useState(() =>
+    typeof window !== "undefined" ? Boolean(getAuthToken()) : false,
+  );
   const [quizResult] = useState<QuizResult | null>(() => {
     if (typeof window === "undefined") return null;
     try {
@@ -108,16 +116,10 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function loadPersistedData() {
-      const token = localStorage.getItem("career_guidance_token");
-      if (!token) return;
       try {
         const [historyRes, testRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/history`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${API_BASE_URL}/api/test-results`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
+          authFetch(`${API_BASE_URL}/api/history`),
+          authFetch(`${API_BASE_URL}/api/test-results`),
         ]);
         const historyPayload = await historyRes.json();
         const testPayload = await testRes.json();
@@ -182,6 +184,11 @@ export default function DashboardPage() {
               <p className="mt-2 text-slate-600">
                 Tổng hợp từ kết quả quiz và lịch sử tư vấn AI để bạn hành động rõ ràng hơn.
               </p>
+              {authUser && (
+                <p className="mt-2 text-sm text-slate-500">
+                  Danh tính hiện tại: {authUser.fullName} ({authUser.email})
+                </p>
+              )}
             </div>
             <div className="flex gap-3">
               <Link href="/" className="text-sm font-semibold text-blue-700 hover:underline">
@@ -190,9 +197,19 @@ export default function DashboardPage() {
               <Link href="/quiz" className="text-sm font-semibold text-blue-700 hover:underline">
                 Làm lại quiz
               </Link>
+              <Link href="/history" className="text-sm font-semibold text-blue-700 hover:underline">
+                Lịch sử
+              </Link>
             </div>
           </div>
         </section>
+
+        {!hasToken && (
+          <section className="rounded-2xl bg-amber-50 p-5 text-amber-800 ring-1 ring-amber-100">
+            Bạn chưa đăng nhập, nên chưa có user identity để lấy dữ liệu riêng.
+            Vui lòng đăng nhập tại trang <Link href="/login" className="font-semibold underline">/login</Link>.
+          </section>
+        )}
 
         {!activeQuizResult && (
           <section className="rounded-2xl bg-amber-50 p-5 text-amber-800 ring-1 ring-amber-100">

@@ -16,7 +16,7 @@ router.post("/career-advice", requireAuth, async (req, res) => {
     const advice = await generateCareerAdvice(message);
 
     await ChatHistory.create({
-      userId: req.user.userId,
+      userId: req.user._id,
       message,
       ...advice,
     });
@@ -31,7 +31,7 @@ router.post("/career-advice", requireAuth, async (req, res) => {
 
 router.get("/history", requireAuth, async (req, res) => {
   try {
-    const history = await ChatHistory.find({ userId: req.user.userId })
+    const history = await ChatHistory.find({ userId: req.user._id })
       .sort({ createdAt: -1 })
       .limit(20)
       .lean();
@@ -57,7 +57,7 @@ router.post("/test-results", requireAuth, async (req, res) => {
     }
 
     const created = await TestResult.create({
-      userId: req.user.userId,
+      userId: req.user._id,
       topTrait: String(payload.topTrait),
       topLabel: String(payload.topLabel),
       confidence: Number(payload.confidence),
@@ -76,7 +76,7 @@ router.post("/test-results", requireAuth, async (req, res) => {
 
 router.get("/test-results", requireAuth, async (req, res) => {
   try {
-    const history = await TestResult.find({ userId: req.user.userId })
+    const history = await TestResult.find({ userId: req.user._id })
       .sort({ createdAt: -1 })
       .limit(20)
       .lean();

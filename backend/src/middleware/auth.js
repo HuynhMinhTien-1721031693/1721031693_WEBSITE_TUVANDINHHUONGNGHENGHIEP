@@ -15,7 +15,10 @@ export function requireAuth(req, res, next) {
 
   try {
     const payload = jwt.verify(token, secret);
-    req.user = payload;
+    req.user = {
+      ...payload,
+      _id: payload.userId || payload._id,
+    };
     return next();
   } catch {
     return res.status(401).json({ error: "Token không hợp lệ hoặc đã hết hạn." });
