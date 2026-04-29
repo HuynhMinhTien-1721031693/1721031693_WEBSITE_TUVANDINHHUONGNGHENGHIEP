@@ -1,215 +1,171 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
-import {
-  authFetch,
-  clearAuthSession,
-  getAuthToken,
-  getAuthUser,
-} from "@/lib/auth-client";
+import { useState } from "react";
 
-type AdviceResult = {
-  careerSuggestions: string[];
-  learningRoadmap: string[];
-  salaryReference: string[];
-};
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
+const navLinks = [
+  { href: "/careers", label: "Ngành nghề" },
+  { href: "/quiz", label: "Quiz" },
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/booking", label: "Tư vấn 1-1" },
+  { href: "/auth", label: "Đăng nhập" },
+];
+
+const stats = [
+  { value: "25,000+", label: "Học sinh đã tư vấn" },
+  { value: "180+", label: "Ngành nghề cập nhật" },
+  { value: "96%", label: "Mức độ hài lòng" },
+];
 
 const features = [
   {
-    title: "Bài kiểm tra tính cách",
-    description: "10 câu hỏi chấm điểm để xác định nhóm nghề phù hợp.",
-    href: "/quiz",
-    cta: "Làm bài test",
+    icon: "🧠",
+    title: "Đánh giá tính cách",
+    description: "Bộ câu hỏi ngắn gọn giúp nhận diện nhóm năng lực nổi trội của bạn.",
   },
   {
-    title: "Chat AI hướng nghiệp",
-    description:
-      "Nhận tư vấn nghề, lộ trình học và mức lương tham khảo theo bối cảnh cá nhân.",
-    href: "/quiz",
-    cta: "Trải nghiệm AI",
+    icon: "🎯",
+    title: "Gợi ý nghề phù hợp",
+    description: "AI đề xuất nghề nghiệp theo điểm mạnh, sở thích và mục tiêu học tập.",
   },
   {
-    title: "Dashboard kết quả",
-    description:
-      "Theo dõi điểm mạnh, nghề đề xuất và các bước hành động tiếp theo.",
-    href: "/dashboard",
-    cta: "Xem dashboard",
+    icon: "🗺️",
+    title: "Lộ trình phát triển",
+    description: "Nhận roadmap rõ ràng theo từng giai đoạn học tập và kỹ năng cần có.",
+  },
+  {
+    icon: "📈",
+    title: "Theo dõi tiến độ",
+    description: "Lưu kết quả và theo dõi quá trình định hướng nghề nghiệp qua dashboard.",
   },
 ];
 
 export default function HomePage() {
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<AdviceResult | null>(null);
-  const [authenticated, setAuthenticated] = useState<boolean>(() =>
-    typeof window !== "undefined" ? Boolean(getAuthToken()) : false,
-  );
-  const [authUser, setAuthUser] = useState(() =>
-    typeof window !== "undefined" ? getAuthUser() : null,
-  );
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const input = message.trim();
-    if (!input) return;
-
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await authFetch(`${API_BASE_URL}/api/career-advice`, {
-        method: "POST",
-        body: JSON.stringify({ message: input }),
-      });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "Không thể lấy tư vấn.");
-
-      setResult(payload.data as AdviceResult);
-    } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "Đã có lỗi xảy ra khi gọi AI.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-indigo-50 px-4 py-8 text-slate-900 md:px-8">
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-        <section className="rounded-3xl bg-white p-8 shadow-lg ring-1 ring-black/5 md:p-12">
-          <p className="inline-flex rounded-full bg-blue-100 px-4 py-1 text-sm font-semibold text-blue-700">
-            Career Guidance Platform
-          </p>
-          <h1 className="mt-4 max-w-3xl text-3xl font-bold leading-tight md:text-5xl">
-            Website hướng nghiệp hiện đại cho học sinh và sinh viên
-          </h1>
-          <p className="mt-4 max-w-3xl text-slate-600 md:text-lg">
-            Bắt đầu từ bài test tính cách, nhận tư vấn AI theo điểm mạnh và theo
-            dõi tiến trình trên dashboard cá nhân.
-          </p>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <Link
-              href="/assessment"
-              className="rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
-            >
-              Bắt đầu miễn phí
-            </Link>
-            <Link
-              href="/dashboard"
-              className="rounded-xl border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-            >
-              Xem dashboard mẫu
-            </Link>
-            <Link
-              href={authenticated ? "/history" : "/login"}
-              className="rounded-xl border border-blue-300 px-6 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
-            >
-              {authenticated ? "Lịch sử của tôi" : "Đăng nhập / Đăng ký"}
-            </Link>
-            {authenticated && (
-              <button
-                onClick={() => {
-                  clearAuthSession();
-                  setAuthenticated(false);
-                  setAuthUser(null);
-                }}
-                className="rounded-xl border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-              >
-                Đăng xuất
-              </button>
-            )}
-          </div>
-          {authenticated && authUser && (
-            <p className="mt-4 text-sm text-slate-600">
-              Đang đăng nhập: <span className="font-semibold">{authUser.fullName}</span>{" "}
-              ({authUser.email})
-            </p>
-          )}
-        </section>
+    <div className="min-h-screen bg-gray-50 text-slate-900">
+      <header className="border-b border-gray-200 bg-white">
+        <nav className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 md:px-6">
+          <Link href="/" className="text-lg font-bold text-[#0F2044]">
+            Career Guidance
+          </Link>
 
-        <section className="grid gap-4 md:grid-cols-3">
-          {features.map((feature) => (
-            <article
-              key={feature.title}
-              className="rounded-2xl bg-white p-6 shadow ring-1 ring-black/5"
-            >
-              <h2 className="text-lg font-semibold">{feature.title}</h2>
-              <p className="mt-2 text-sm text-slate-600">{feature.description}</p>
-              <Link
-                href={feature.href}
-                className="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:underline"
-              >
-                {feature.cta}
-              </Link>
-            </article>
-          ))}
-        </section>
-
-        <section
-          id="ai-chat"
-          className="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-black/5 md:p-8"
-        >
-          <h2 className="text-2xl font-semibold">AI tư vấn nghề nghiệp</h2>
-          <p className="mt-2 text-slate-600">
-            Nhập mô tả về sở thích hoặc điểm mạnh để nhận gợi ý nghề phù hợp.
-          </p>
-
-          <form
-            onSubmit={handleSubmit}
-            className="mt-5 flex flex-col gap-3 sm:flex-row"
+          <button
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-[#0F2044] md:hidden"
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            aria-label="Toggle menu"
+            aria-expanded={isMenuOpen}
           >
-            <input
-              value={message}
-              onChange={(event) => setMessage(event.target.value)}
-              placeholder="Ví dụ: Tôi học kém toán nhưng thích máy tính"
-              className="h-12 flex-1 rounded-xl border border-slate-200 px-4 outline-none ring-blue-200 transition focus:ring"
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="h-12 rounded-xl bg-slate-900 px-6 font-semibold text-white transition hover:bg-slate-700 disabled:opacity-60"
-            >
-              {loading ? "Đang phân tích..." : "Gửi cho AI"}
-            </button>
-          </form>
+            <span className="text-xl">{isMenuOpen ? "✕" : "☰"}</span>
+          </button>
 
-          {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+          <div className="hidden items-center gap-6 md:flex">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-sm font-medium text-slate-700 transition hover:text-[#0F2044]"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </nav>
 
-          {result && (
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
-              <article className="rounded-2xl bg-blue-50 p-4">
-                <h3 className="font-semibold text-blue-900">Gợi ý nghề</h3>
-                <ul className="mt-2 space-y-1 text-sm text-blue-800">
-                  {result.careerSuggestions.map((item) => (
-                    <li key={item}>- {item}</li>
-                  ))}
-                </ul>
-              </article>
-              <article className="rounded-2xl bg-emerald-50 p-4">
-                <h3 className="font-semibold text-emerald-900">Lộ trình học</h3>
-                <ul className="mt-2 space-y-1 text-sm text-emerald-800">
-                  {result.learningRoadmap.map((item) => (
-                    <li key={item}>- {item}</li>
-                  ))}
-                </ul>
-              </article>
-              <article className="rounded-2xl bg-amber-50 p-4">
-                <h3 className="font-semibold text-amber-900">
-                  Mức lương tham khảo
-                </h3>
-                <ul className="mt-2 space-y-1 text-sm text-amber-800">
-                  {result.salaryReference.map((item) => (
-                    <li key={item}>- {item}</li>
-                  ))}
-                </ul>
-              </article>
+        {isMenuOpen && (
+          <div className="border-t border-gray-200 px-4 py-3 md:hidden">
+            <div className="flex flex-col gap-3">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-gray-100"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ))}
             </div>
-          )}
+          </div>
+        )}
+      </header>
+
+      <main>
+        <section className="bg-[#0F2044]">
+          <div className="mx-auto w-full max-w-6xl px-4 py-20 md:px-6 md:py-24">
+            <p className="inline-flex rounded-full bg-white/10 px-4 py-1 text-sm font-semibold text-white">
+              Nền tảng tư vấn hướng nghiệp
+            </p>
+            <h1 className="mt-6 max-w-3xl text-4xl font-bold leading-tight text-white md:text-6xl">
+              Khám phá nghề nghiệp phù hợp với{" "}
+              <span className="text-[#F5A623]">năng lực và đam mê</span> của bạn
+            </h1>
+            <p className="mt-5 max-w-2xl text-base text-slate-200 md:text-lg">
+              Kết hợp bài test khoa học và gợi ý AI để giúp học sinh, sinh viên chọn đúng
+              ngành, đúng lộ trình và tự tin hơn với quyết định tương lai.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href="/quiz"
+                className="btn-accent px-6 py-3 text-sm font-semibold"
+              >
+                Bắt đầu làm bài test
+              </Link>
+              <Link
+                href="/dashboard"
+                className="rounded-lg border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+              >
+                Xem dashboard mẫu
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="-mt-8 px-4 md:px-6">
+          <div className="mx-auto grid w-full max-w-6xl gap-4 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100 md:grid-cols-3">
+            {stats.map((item) => (
+              <article key={item.label} className="text-center">
+                <p className="text-3xl font-bold text-[#0F2044] md:text-4xl">{item.value}</p>
+                <p className="mt-1 text-sm text-slate-600">{item.label}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-auto w-full max-w-6xl px-4 py-16 md:px-6">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-[#0F2044] md:text-3xl">Tính năng nổi bật</h2>
+            <p className="mt-2 max-w-2xl text-slate-600">
+              Một hành trình định hướng nghề nghiệp trực quan, cá nhân hóa và dễ theo dõi.
+            </p>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-2">
+            {features.map((feature) => (
+              <article key={feature.title} className="app-card p-6">
+                <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-[#1D9E75]/10 text-2xl">
+                  {feature.icon}
+                </div>
+                <h3 className="text-lg font-semibold text-[#0F2044]">{feature.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{feature.description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="bg-[#0F2044] px-4 py-16 md:px-6">
+          <div className="mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+            <div>
+              <h2 className="text-3xl font-bold text-white">Sẵn sàng khám phá con đường phù hợp?</h2>
+              <p className="mt-2 text-slate-200">
+                Bắt đầu bài test ngay hôm nay để nhận tư vấn nghề nghiệp cá nhân hóa.
+              </p>
+            </div>
+            <Link href="/quiz" className="btn-accent px-6 py-3 text-sm font-semibold">
+              Bắt đầu làm bài test
+            </Link>
+          </div>
         </section>
       </main>
     </div>

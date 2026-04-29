@@ -1,26 +1,44 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-navy: #0f2044;
+  --color-amber: #f5a623;
+  --color-teal: #1d9e75;
+  --radius-sm: 8px;
+  --radius-card: 12px;
+  --background: #f9fafb;
+  --foreground: #0f172a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-navy: var(--color-navy);
+  --color-amber: var(--color-amber);
+  --color-teal: var(--color-teal);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+@layer components {
+  .app-card {
+    @apply bg-white border border-gray-100 rounded-xl shadow-sm;
+    border-radius: var(--radius-card);
+  }
+
+  .btn-primary {
+    @apply bg-[#0F2044] text-white hover:bg-[#1a3a6e];
+    border-radius: var(--radius-sm);
+  }
+
+  .btn-accent {
+    @apply bg-[#F5A623] text-[#0F2044] hover:brightness-105;
+    border-radius: var(--radius-sm);
+  }
 }
