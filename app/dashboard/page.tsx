@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type TraitScores = {
   analysis: number;
@@ -33,6 +33,13 @@ type DashboardData = {
   recommendedTracks: string[];
 };
 
+const scoreLabels: Array<{ key: keyof TraitScores; label: string; tone: string }> = [
+  { key: "analysis", label: "Phân tích", tone: "bg-blue-500" },
+  { key: "creative", label: "Sáng tạo", tone: "bg-emerald-500" },
+  { key: "social", label: "Xã hội", tone: "bg-violet-500" },
+  { key: "practical", label: "Thực tiễn", tone: "bg-amber-500" },
+];
+
 export default function DashboardPage() {
   const [quizResult] = useState<QuizResult | null>(() => {
     if (typeof window === "undefined") return null;
@@ -43,6 +50,7 @@ export default function DashboardPage() {
       return null;
     }
   });
+
   const [chatHistory] = useState<ChatMessage[]>(() => {
     if (typeof window === "undefined") return [];
     try {
@@ -52,33 +60,46 @@ export default function DashboardPage() {
       return [];
     }
   });
+
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const recentQuestions = useMemo(
+    () =>
+      chatHistory
+        .filter((item) => item.role === "user")
+        .slice(-5)
+        .reverse(),
+    [chatHistory],
+  );
 
   useEffect(() => {
     async function buildDashboard() {
       if (!quizResult) return;
-      const latestQuestions = chatHistory
-        .filter((item) => item.role === "user")
-        .slice(-3)
-        .map((item) => item.content);
-
-      const response = await fetch("/api/dashboard", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quizResult, latestQuestions }),
-      });
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.error || "Không tạo được dashboard.");
+      setLoading(true);
+      setError(null);
+      try {
+        const latestQuestions = recentQuestions.slice(0, 3).map((item) => item.content);
+        const response = await fetch("/api/dashboard", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ quizResult, latestQuestions }),
+        });
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.error || "Không tạo được dashboard.");
+        }
+        setDashboardData(payload.data as DashboardData);
+      } catch (issue) {
+        setError(issue instanceof Error ? issue.message : "Lỗi dashboard.");
+      } finally {
+        setLoading(false);
       }
-      setDashboardData(payload.data as DashboardData);
     }
 
-    buildDashboard().catch((issue) => {
-      setError(issue instanceof Error ? issue.message : "Lỗi dashboard.");
-    });
-  }, [quizResult, chatHistory]);
+    void buildDashboard();
+  }, [quizResult, recentQuestions]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-blue-50 px-4 py-6 md:px-8">
@@ -86,12 +107,12 @@ export default function DashboardPage() {
         <section className="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-black/5 md:p-10">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">Bảng điều khiển kết quả</h1>
+              <h1 className="text-3xl font-bold text-slate-900">Dashboard hướng nghiệp</h1>
               <p className="mt-2 text-slate-600">
-                Tổng hợp từ bài test tính cách và lịch sử chat AI gần nhất.
+                Tổng hợp từ kết quả quiz và lịch sử tư vấn AI để bạn hành động rõ ràng hơn.
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <Link href="/" className="text-sm font-semibold text-blue-700 hover:underline">
                 Trang chủ
               </Link>
@@ -104,7 +125,7 @@ export default function DashboardPage() {
 
         {!quizResult && (
           <section className="rounded-2xl bg-amber-50 p-5 text-amber-800 ring-1 ring-amber-100">
-            Chưa có kết quả quiz. Hãy hoàn thành bài test trước khi xem dashboard.
+            Chưa có dữ liệu quiz. Hãy hoàn thành bài test để mở dashboard đầy đủ.
           </section>
         )}
 
@@ -124,7 +145,7 @@ export default function DashboardPage() {
                 <p className="mt-2 text-xl font-bold text-slate-900">{chatHistory.length}</p>
               </article>
               <article className="rounded-2xl bg-white p-5 shadow ring-1 ring-black/5">
-                <p className="text-sm text-slate-500">Nghề gợi ý</p>
+                <p className="text-sm text-slate-500">Nghề đề xuất ưu tiên</p>
                 <p className="mt-2 text-xl font-bold text-emerald-700">
                   {quizResult.careers[0] || "Đang cập nhật"}
                 </p>
@@ -134,13 +155,25 @@ export default function DashboardPage() {
             <section className="grid gap-4 md:grid-cols-2">
               <article className="rounded-2xl bg-white p-5 shadow ring-1 ring-black/5">
                 <h2 className="text-lg font-semibold text-slate-900">Điểm theo nhóm tính cách</h2>
-                <ul className="mt-3 space-y-1 text-sm text-slate-700">
-                  <li>- Phân tích: {quizResult.scores.analysis}</li>
-                  <li>- Sáng tạo: {quizResult.scores.creative}</li>
-                  <li>- Xã hội: {quizResult.scores.social}</li>
-                  <li>- Thực tiễn: {quizResult.scores.practical}</li>
-                </ul>
+                <div className="mt-4 space-y-3">
+                  {scoreLabels.map((item) => {
+                    const value = quizResult.scores[item.key];
+                    const width = Math.min(100, Math.round((value / 34) * 100));
+                    return (
+                      <div key={item.key}>
+                        <div className="mb-1 flex justify-between text-sm">
+                          <span>{item.label}</span>
+                          <span className="font-semibold">{value} điểm</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-slate-100">
+                          <div className={`h-2 rounded-full ${item.tone}`} style={{ width: `${width}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </article>
+
               <article className="rounded-2xl bg-white p-5 shadow ring-1 ring-black/5">
                 <h2 className="text-lg font-semibold text-slate-900">Điểm mạnh nổi bật</h2>
                 <ul className="mt-3 space-y-1 text-sm text-slate-700">
@@ -148,36 +181,64 @@ export default function DashboardPage() {
                     <li key={item}>- {item}</li>
                   ))}
                 </ul>
+                <h3 className="mt-4 font-semibold text-slate-900">Top nghề gợi ý</h3>
+                <ul className="mt-2 space-y-1 text-sm text-slate-700">
+                  {quizResult.careers.slice(0, 3).map((item) => (
+                    <li key={item}>- {item}</li>
+                  ))}
+                </ul>
               </article>
             </section>
 
-            {dashboardData && (
-              <section className="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-black/5 md:p-8">
-                <h2 className="text-2xl font-bold text-slate-900">Phân tích dashboard</h2>
-                <p className="mt-3 text-slate-700">{dashboardData.summary}</p>
-                <p className="mt-4 text-sm text-slate-500">
-                  Trục mạnh nhất: <span className="font-semibold">{dashboardData.strongestDimension}</span>
+            <section className="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-black/5 md:p-8">
+              <h2 className="text-xl font-semibold text-slate-900">Lịch sử câu hỏi gần đây</h2>
+              {recentQuestions.length === 0 ? (
+                <p className="mt-2 text-sm text-slate-600">
+                  Chưa có lịch sử chat AI. Hãy đặt một câu hỏi ở trang chủ để cá nhân hóa dashboard.
                 </p>
-                <div className="mt-5 grid gap-4 md:grid-cols-2">
-                  <article className="rounded-2xl bg-blue-50 p-4">
-                    <h3 className="font-semibold text-blue-900">Hành động tiếp theo</h3>
-                    <ul className="mt-2 space-y-1 text-sm text-blue-800">
-                      {dashboardData.nextActions.map((item) => (
-                        <li key={item}>- {item}</li>
-                      ))}
-                    </ul>
-                  </article>
-                  <article className="rounded-2xl bg-emerald-50 p-4">
-                    <h3 className="font-semibold text-emerald-900">Lộ trình nghề phù hợp</h3>
-                    <ul className="mt-2 space-y-1 text-sm text-emerald-800">
-                      {dashboardData.recommendedTracks.map((item) => (
-                        <li key={item}>- {item}</li>
-                      ))}
-                    </ul>
-                  </article>
+              ) : (
+                <div className="mt-4 space-y-2">
+                  {recentQuestions.map((item) => (
+                    <p key={item.id} className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                      - {item.content}
+                    </p>
+                  ))}
                 </div>
-              </section>
-            )}
+              )}
+            </section>
+
+            <section className="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-black/5 md:p-8">
+              <h2 className="text-2xl font-bold text-slate-900">Phân tích hành động</h2>
+
+              {loading && <p className="mt-3 text-sm text-slate-500">Đang tổng hợp dữ liệu dashboard...</p>}
+
+              {dashboardData && (
+                <>
+                  <p className="mt-3 text-slate-700">{dashboardData.summary}</p>
+                  <p className="mt-2 text-sm text-slate-500">
+                    Trục mạnh nhất: <span className="font-semibold">{dashboardData.strongestDimension}</span>
+                  </p>
+                  <div className="mt-5 grid gap-4 md:grid-cols-2">
+                    <article className="rounded-2xl bg-blue-50 p-4">
+                      <h3 className="font-semibold text-blue-900">Hành động 30 ngày</h3>
+                      <ul className="mt-2 space-y-1 text-sm text-blue-800">
+                        {dashboardData.nextActions.map((item) => (
+                          <li key={item}>- {item}</li>
+                        ))}
+                      </ul>
+                    </article>
+                    <article className="rounded-2xl bg-emerald-50 p-4">
+                      <h3 className="font-semibold text-emerald-900">Lộ trình nghề ưu tiên</h3>
+                      <ul className="mt-2 space-y-1 text-sm text-emerald-800">
+                        {dashboardData.recommendedTracks.map((item) => (
+                          <li key={item}>- {item}</li>
+                        ))}
+                      </ul>
+                    </article>
+                  </div>
+                </>
+              )}
+            </section>
           </>
         )}
 
