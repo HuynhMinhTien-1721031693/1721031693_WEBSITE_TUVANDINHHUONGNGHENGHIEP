@@ -1,27 +1,45 @@
 import { NextResponse } from "next/server";
 
-type Trait = "analysis" | "creative" | "social" | "practical";
-type QuizInput = { questionId: number; trait: Trait; score: number };
-
-const traitLabels: Record<Trait, string> = {
-  analysis: "Phân tích",
-  creative: "Sáng tạo",
-  social: "Xã hội",
-  practical: "Thực tiễn",
+type Riasec = "R" | "I" | "A" | "S" | "E" | "C";
+type MbtiPole = "E" | "I" | "S" | "N" | "T" | "F" | "J" | "P";
+type QuizInput = {
+  questionId: number;
+  riasec: Riasec;
+  mbti: MbtiPole;
+  score: number;
 };
 
-const careersByTrait: Record<Trait, string[]> = {
-  analysis: ["Data Analyst", "Software Engineer", "AI Engineer", "QA Engineer"],
-  creative: ["UI/UX Designer", "Graphic Designer", "Content Strategist", "Digital Marketer"],
-  social: ["Career Counselor", "HR Specialist", "Trainer", "Customer Success"],
-  practical: ["System Admin", "Project Coordinator", "Product Operations", "Technical Support"],
+type CareerProfile = {
+  name: string;
+  riasec: Riasec[];
+  mbti: string[];
 };
 
-const strengthsByTrait: Record<Trait, string[]> = {
-  analysis: ["Tư duy logic", "Phân tích dữ liệu", "Giải quyết vấn đề"],
-  creative: ["Sáng tạo ý tưởng", "Thẩm mỹ tốt", "Kể chuyện bằng nội dung"],
-  social: ["Giao tiếp hiệu quả", "Lắng nghe tốt", "Hợp tác nhóm"],
-  practical: ["Tư duy thực thi", "Kỷ luật cao", "Chú trọng kết quả"],
+const riasecLabels: Record<Riasec, string> = {
+  R: "Realistic",
+  I: "Investigative",
+  A: "Artistic",
+  S: "Social",
+  E: "Enterprising",
+  C: "Conventional",
+};
+
+const careerProfiles: CareerProfile[] = [
+  { name: "Software Engineer", riasec: ["I", "R", "C"], mbti: ["INTJ", "INTP", "ISTJ"] },
+  { name: "Data Analyst", riasec: ["I", "C", "R"], mbti: ["INTJ", "ISTJ", "ENTJ"] },
+  { name: "UX/UI Designer", riasec: ["A", "I", "S"], mbti: ["INFP", "ENFP", "ISFP"] },
+  { name: "Digital Marketer", riasec: ["E", "A", "S"], mbti: ["ENFP", "ENTP", "ESFP"] },
+  { name: "HR Specialist", riasec: ["S", "E", "C"], mbti: ["ENFJ", "ESFJ", "INFJ"] },
+  { name: "Project Coordinator", riasec: ["E", "C", "S"], mbti: ["ENTJ", "ESTJ", "ENFJ"] },
+];
+
+const strengthsByRiasec: Record<Riasec, string[]> = {
+  R: ["Thực hành tốt", "Thích làm ra sản phẩm cụ thể"],
+  I: ["Tư duy phân tích", "Thích nghiên cứu và giải quyết vấn đề"],
+  A: ["Sáng tạo", "Nhạy thẩm mỹ và ý tưởng"],
+  S: ["Đồng cảm", "Giỏi hỗ trợ và giao tiếp"],
+  E: ["Chủ động", "Có năng lực dẫn dắt và thuyết phục"],
+  C: ["Cẩn thận", "Làm việc có quy trình và tính hệ thống"],
 };
 
 export async function POST(request: Request) {
@@ -36,37 +54,80 @@ export async function POST(request: Request) {
       );
     }
 
-    const scores: Record<Trait, number> = {
-      analysis: 0,
-      creative: 0,
-      social: 0,
-      practical: 0,
+    const riasecScores: Record<Riasec, number> = {
+      R: 0,
+      I: 0,
+      A: 0,
+      S: 0,
+      E: 0,
+      C: 0,
+    };
+    const mbtiScores: Record<MbtiPole, number> = {
+      E: 0,
+      I: 0,
+      S: 0,
+      N: 0,
+      T: 0,
+      F: 0,
+      J: 0,
+      P: 0,
     };
 
     for (const answer of answers) {
-      if (!answer || !scores.hasOwnProperty(answer.trait)) {
+      if (
+        !answer ||
+        !Object.hasOwn(riasecScores, answer.riasec) ||
+        !Object.hasOwn(mbtiScores, answer.mbti)
+      ) {
         return NextResponse.json(
-          { error: "Dữ liệu trait không hợp lệ." },
+          { error: "Dữ liệu RIASEC/MBTI không hợp lệ." },
           { status: 400 },
         );
       }
-      scores[answer.trait] += Number(answer.score) || 0;
+      riasecScores[answer.riasec] += Number(answer.score) || 0;
+      mbtiScores[answer.mbti] += 1;
     }
 
-    const ranking = Object.entries(scores).sort((a, b) => b[1] - a[1]) as Array<
-      [Trait, number]
-    >;
-    const [topTrait, topScore] = ranking[0];
-    const confidence = Math.min(100, Math.round((topScore / 34) * 100));
+    const topRiasec = (Object.entries(riasecScores) as Array<[Riasec, number]>)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([code]) => code);
+    const hollandCode = topRiasec.join("");
+
+    const mbtiCode =
+      (mbtiScores.E >= mbtiScores.I ? "E" : "I") +
+      (mbtiScores.S >= mbtiScores.N ? "S" : "N") +
+      (mbtiScores.T >= mbtiScores.F ? "T" : "F") +
+      (mbtiScores.J >= mbtiScores.P ? "J" : "P");
+
+    const scoredCareers = careerProfiles
+      .map((career) => {
+        const riasecMatch = career.riasec.filter((item) => topRiasec.includes(item)).length;
+        const mbtiMatch = career.mbti.includes(mbtiCode) ? 2 : 0;
+        return { name: career.name, score: riasecMatch * 2 + mbtiMatch };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 4)
+      .map((item) => item.name);
+
+    const confidence = Math.min(
+      100,
+      Math.round(((riasecScores[topRiasec[0]] || 0) / 15) * 100),
+    );
+    const strengths = Array.from(
+      new Set(topRiasec.flatMap((code) => strengthsByRiasec[code])),
+    ).slice(0, 4);
 
     return NextResponse.json({
       data: {
-        topTrait,
-        topLabel: traitLabels[topTrait],
+        topTrait: topRiasec[0],
+        topLabel: riasecLabels[topRiasec[0]],
+        hollandCode,
+        mbtiCode,
         confidence,
-        scores,
-        careers: careersByTrait[topTrait],
-        strengths: strengthsByTrait[topTrait],
+        scores: riasecScores,
+        careers: scoredCareers,
+        strengths,
       },
     });
   } catch {

@@ -9,6 +9,11 @@ type AdviceResult = {
   recommendedCareer: string;
 };
 
+type UserResultInput = {
+  personality?: string;
+  skills?: string;
+};
+
 function extractJsonFromText(content: string): AdviceResult | null {
   const startIndex = content.indexOf("{");
   const endIndex = content.lastIndexOf("}");
@@ -42,6 +47,7 @@ async function callOpenAI(
   message: string,
   testResultSummary: string,
   targetCareer: string,
+  userResult: UserResultInput,
 ): Promise<AdviceResult> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("Thiếu OPENAI_API_KEY.");
@@ -59,15 +65,23 @@ async function callOpenAI(
         {
           role: "system",
           content:
-            "Bạn là AI tư vấn hướng nghiệp tại Việt Nam. Luôn trả lời JSON với keys: careerSuggestions, learningRoadmap, salaryReference, deepAnalysis, roadmapByCareer, recommendedCareer. Các key dạng mảng phải có 3-6 string ngắn gọn, thực tế. recommendedCareer là string.",
+            "Bạn là AI tư vấn hướng nghiệp tại Việt Nam. Trả về DUY NHAT JSON voi keys: careerSuggestions, learningRoadmap, salaryReference, deepAnalysis, roadmapByCareer, recommendedCareer. careerSuggestions PHAI co dung 3 nghe nghiep. learningRoadmap va salaryReference moi key 3-6 muc. salaryReference phai ghi ro khoang luong theo dinh dang ngan gon.",
         },
         {
           role: "user",
           content:
-            `Người dùng: "${message}".\n` +
-            `Kết quả test tính cách: ${testResultSummary}.\n` +
-            `Nghề mục tiêu ưu tiên: ${targetCareer}.\n` +
-            "Hãy tư vấn chuyên sâu theo điểm mạnh/yếu, gợi ý ngành phù hợp, roadmap tổng quát và roadmap chi tiết cho nghề mục tiêu.",
+            "User result:\n" +
+            `- Personality: ${userResult.personality || "Unknown"}\n` +
+            `- Skills: ${userResult.skills || "Unknown"}\n\n` +
+            `User message: "${message}".\n` +
+            `Test summary: ${testResultSummary || "N/A"}.\n` +
+            `Target career: ${targetCareer}.\n\n` +
+            "Logic bat buoc:\n" +
+            "1) Uu tien nghe can tu duy sang tao neu Personality la Creative.\n" +
+            "2) Han che nghe yeu cau toan nang neu Skills cho thay Weak math.\n" +
+            "3) Moi nghe can co ly do phu hop ngan gon trong deepAnalysis.\n" +
+            "4) Dua learning roadmap theo tung buoc hoc tu co ban den portfolio.\n" +
+            "5) Dua salary range theo thi truong Viet Nam o muc tham khao.",
         },
       ],
     }),
@@ -92,6 +106,7 @@ async function callGemini(
   message: string,
   testResultSummary: string,
   targetCareer: string,
+  userResult: UserResultInput,
 ): Promise<AdviceResult> {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!apiKey) throw new Error("Thiếu GEMINI_API_KEY hoặc GOOGLE_API_KEY.");
@@ -108,11 +123,17 @@ async function callGemini(
           parts: [
             {
               text:
-                "Bạn là AI tư vấn hướng nghiệp tại Việt Nam. Trả về DUY NHẤT JSON với keys: careerSuggestions, learningRoadmap, salaryReference, deepAnalysis, roadmapByCareer, recommendedCareer. Các key dạng mảng có 3-6 string; recommendedCareer là string. Không thêm markdown.\n" +
-                `Người dùng: "${message}".\n` +
-                `Kết quả test tính cách: ${testResultSummary}.\n` +
-                `Nghề mục tiêu ưu tiên: ${targetCareer}.\n` +
-                "Hãy tư vấn chuyên sâu theo điểm mạnh/yếu, gợi ý ngành phù hợp, roadmap tổng quát và roadmap chi tiết cho nghề mục tiêu.",
+                "Ban la AI tu van huong nghiep tai Viet Nam. Tra ve DUY NHAT JSON voi keys: careerSuggestions, learningRoadmap, salaryReference, deepAnalysis, roadmapByCareer, recommendedCareer. careerSuggestions PHAI co dung 3 nghe nghiep. salaryReference phai co khoang luong ro rang. Khong them markdown.\n" +
+                "User result:\n" +
+                `- Personality: ${userResult.personality || "Unknown"}\n` +
+                `- Skills: ${userResult.skills || "Unknown"}\n\n` +
+                `User message: "${message}".\n` +
+                `Test summary: ${testResultSummary || "N/A"}.\n` +
+                `Target career: ${targetCareer}.\n\n` +
+                "Logic bat buoc:\n" +
+                "1) Neu Personality la Creative -> uu tien nghe sang tao.\n" +
+                "2) Neu Skills la Weak math -> tranh nghe can toan nang.\n" +
+                "3) Dua 3 nghe, learning roadmap, salary range.",
             },
           ],
         },
@@ -141,6 +162,7 @@ export async function POST(request: Request) {
     const message = String(body?.message || "").trim();
     const testResultSummary = String(body?.testResultSummary || "").trim();
     const targetCareer = String(body?.targetCareer || "Frontend Developer").trim();
+    const userResult = (body?.userResult || {}) as UserResultInput;
 
     if (!message) {
       return NextResponse.json(
@@ -152,9 +174,9 @@ export async function POST(request: Request) {
     let data: AdviceResult;
 
     if (process.env.OPENAI_API_KEY) {
-      data = await callOpenAI(message, testResultSummary, targetCareer);
+      data = await callOpenAI(message, testResultSummary, targetCareer, userResult);
     } else if (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) {
-      data = await callGemini(message, testResultSummary, targetCareer);
+      data = await callGemini(message, testResultSummary, targetCareer, userResult);
     } else {
       return NextResponse.json(
         {
@@ -163,6 +185,10 @@ export async function POST(request: Request) {
         },
         { status: 500 },
       );
+    }
+
+    if (data.careerSuggestions.length > 3) {
+      data.careerSuggestions = data.careerSuggestions.slice(0, 3);
     }
 
     return NextResponse.json({ data });

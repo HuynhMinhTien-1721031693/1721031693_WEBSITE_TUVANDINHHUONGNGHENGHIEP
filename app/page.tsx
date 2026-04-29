@@ -8,6 +8,7 @@ type AdviceResult = {
   learningRoadmap: string[];
   salaryReference: string[];
 };
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
 const features = [
   {
@@ -46,9 +47,11 @@ export default function HomePage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/career-advice", {
+      const response = await fetch(`${API_BASE_URL}/api/career-advice`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ message: input }),
       });
       const payload = await response.json();
@@ -92,6 +95,12 @@ export default function HomePage() {
               className="rounded-xl border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
             >
               Xem dashboard mẫu
+            </Link>
+            <Link
+              href="/auth"
+              className="rounded-xl border border-blue-300 px-6 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
+            >
+              Đăng nhập / Đăng ký
             </Link>
           </div>
         </section>

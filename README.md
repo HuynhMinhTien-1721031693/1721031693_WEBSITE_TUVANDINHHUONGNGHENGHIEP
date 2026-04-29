@@ -80,3 +80,21 @@ Example request body for `/api/career-advice`:
   "message": "Em thích công nghệ, giao tiếp tốt nhưng chưa biết chọn ngành nào"
 }
 ```
+
+## Feature Checklist
+
+Basic features:
+
+- Trang giới thiệu ngành nghề / lĩnh vực: `/careers`
+- Bài test trắc nghiệm tính cách / năng lực (RIASEC + MBTI mini): `/quiz`
+- Hiển thị kết quả và gợi ý nghề phù hợp: tại trang `/quiz` và `/dashboard`
+- Đăng ký / đăng nhập tài khoản (JWT): `/auth`
+- Lưu lịch sử kết quả: localStorage + MongoDB (`/api/test-results`) khi đã đăng nhập
+
+Advanced features:
+
+- Đặt lịch tư vấn 1-1 với chuyên gia: `/booking` (form khởi tạo)
+- Blog xu hướng nghề nghiệp: `/blog`
+- Tìm kiếm và lọc ngành nghề: trong `/careers`
+- Dashboard quản trị (admin): `/admin` (khung quản trị)
+- Giao diện responsive: các trang dùng Tailwind grid/flex theo breakpoints

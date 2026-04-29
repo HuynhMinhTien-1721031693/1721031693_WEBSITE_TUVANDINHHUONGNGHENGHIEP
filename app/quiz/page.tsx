@@ -8,15 +8,19 @@ type QuestionOption = { id: string; text: string; trait: Trait; score: number };
 type Question = { id: number; text: string; options: QuestionOption[] };
 
 type QuizApiResponse = {
-  topTrait: Trait;
+  topTrait: string;
   topLabel: string;
+  hollandCode: string;
+  mbtiCode: string;
   confidence: number;
-  scores: Record<Trait, number>;
+  scores: Record<string, number>;
   careers: string[];
   strengths: string[];
 };
+type QuizHistoryEntry = QuizApiResponse & { createdAt: string };
 
 const QUIZ_STORAGE_KEY = "career_quiz_latest_result";
+const QUIZ_HISTORY_STORAGE_KEY = "career_quiz_history";
 
 const QUESTIONS: Question[] = [
   {
@@ -121,11 +125,39 @@ const QUESTIONS: Question[] = [
   },
 ];
 
+function toRiasec(trait: Trait): "R" | "I" | "A" | "S" | "E" | "C" {
+  switch (trait) {
+    case "analysis":
+      return "I";
+    case "creative":
+      return "A";
+    case "social":
+      return "S";
+    default:
+      return "C";
+  }
+}
+
+function toMbti(trait: Trait): "E" | "I" | "S" | "N" | "T" | "F" | "J" | "P" {
+  switch (trait) {
+    case "analysis":
+      return "T";
+    case "creative":
+      return "N";
+    case "social":
+      return "F";
+    default:
+      return "J";
+  }
+}
+
 export default function QuizPage() {
   const [answers, setAnswers] = useState<Record<number, QuestionOption>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<QuizApiResponse | null>(null);
+  const backendBaseUrl =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
   const answeredCount = useMemo(() => Object.keys(answers).length, [answers]);
 
@@ -144,7 +176,8 @@ export default function QuizPage() {
     try {
       const payload = QUESTIONS.map((question) => ({
         questionId: question.id,
-        trait: answers[question.id].trait,
+        riasec: toRiasec(answers[question.id].trait),
+        mbti: toMbti(answers[question.id].trait),
         score: answers[question.id].score,
       }));
 
@@ -158,6 +191,24 @@ export default function QuizPage() {
 
       setResult(data.data as QuizApiResponse);
       localStorage.setItem(QUIZ_STORAGE_KEY, JSON.stringify(data.data));
+      const existingHistoryRaw = localStorage.getItem(QUIZ_HISTORY_STORAGE_KEY);
+      const existingHistory = existingHistoryRaw ? (JSON.parse(existingHistoryRaw) as QuizHistoryEntry[]) : [];
+      const nextHistory = [
+        { ...(data.data as QuizApiResponse), createdAt: new Date().toISOString() },
+        ...existingHistory,
+      ].slice(0, 20);
+      localStorage.setItem(QUIZ_HISTORY_STORAGE_KEY, JSON.stringify(nextHistory));
+
+      // Persist test results to MongoDB backend
+      const token = localStorage.getItem("career_guidance_token");
+      await fetch(`${backendBaseUrl}/api/test-results`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(data.data),
+      });
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Lỗi hệ thống.");
     } finally {
@@ -241,11 +292,17 @@ export default function QuizPage() {
               <article className="rounded-2xl bg-slate-50 p-4">
                 <h4 className="font-semibold">Điểm theo nhóm</h4>
                 <ul className="mt-2 space-y-1 text-sm text-slate-700">
-                  <li>- Phân tích: {result.scores.analysis}</li>
-                  <li>- Sáng tạo: {result.scores.creative}</li>
-                  <li>- Xã hội: {result.scores.social}</li>
-                  <li>- Thực tiễn: {result.scores.practical}</li>
+                  <li>- R (Realistic): {result.scores.R ?? 0}</li>
+                  <li>- I (Investigative): {result.scores.I ?? 0}</li>
+                  <li>- A (Artistic): {result.scores.A ?? 0}</li>
+                  <li>- S (Social): {result.scores.S ?? 0}</li>
+                  <li>- E (Enterprising): {result.scores.E ?? 0}</li>
+                  <li>- C (Conventional): {result.scores.C ?? 0}</li>
                 </ul>
+                <p className="mt-3 text-sm text-slate-700">
+                  Holland: <span className="font-semibold">{result.hollandCode}</span> - MBTI:
+                  <span className="font-semibold"> {result.mbtiCode}</span>
+                </p>
               </article>
               <article className="rounded-2xl bg-emerald-50 p-4">
                 <h4 className="font-semibold text-emerald-900">Gợi ý nghề nghiệp</h4>

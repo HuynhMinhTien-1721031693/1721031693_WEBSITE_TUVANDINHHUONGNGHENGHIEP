@@ -1,23 +1,21 @@
 import { NextResponse } from "next/server";
 
-type TraitScores = {
-  analysis: number;
-  creative: number;
-  social: number;
-  practical: number;
-};
-
 type QuizResult = {
   topLabel: string;
-  scores: TraitScores;
+  topTrait?: string;
+  hollandCode?: string;
+  mbtiCode?: string;
+  scores: Record<string, number>;
   careers: string[];
 };
 
-const strongestDimensionByTrait: Record<keyof TraitScores, string> = {
-  analysis: "Năng lực phân tích và tư duy hệ thống",
-  creative: "Năng lực sáng tạo và thiết kế giải pháp",
-  social: "Năng lực tương tác và phát triển con người",
-  practical: "Năng lực thực thi và tối ưu vận hành",
+const strongestDimensionByTrait: Record<string, string> = {
+  R: "Năng lực thực hành và tạo sản phẩm cụ thể",
+  I: "Năng lực phân tích và nghiên cứu vấn đề",
+  A: "Năng lực sáng tạo và phát triển ý tưởng",
+  S: "Năng lực hỗ trợ, giao tiếp và phát triển con người",
+  E: "Năng lực dẫn dắt, thuyết phục và định hướng kết quả",
+  C: "Năng lực tổ chức, quy trình và độ chính xác",
 };
 
 export async function POST(request: Request) {
@@ -30,10 +28,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Thiếu dữ liệu quizResult." }, { status: 400 });
     }
 
-    const scoreEntries = Object.entries(quizResult.scores).sort((a, b) => b[1] - a[1]) as Array<
-      [keyof TraitScores, number]
-    >;
-    const strongest = scoreEntries[0][0];
+    const scoreEntries = Object.entries(quizResult.scores).sort((a, b) => b[1] - a[1]);
+    const strongest = String(quizResult.topTrait || scoreEntries[0]?.[0] || "I");
 
     const nextActions = [
       "Chọn 1 nghề mục tiêu trong 4 tuần tới và đọc JD từ 5-10 công ty.",
@@ -47,8 +43,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       data: {
-        summary: `Bạn đang nghiêng về nhóm ${quizResult.topLabel}. Dashboard tổng hợp cho thấy hướng phát triển phù hợp là ưu tiên kỹ năng nền tảng và thực hành dự án thực tế.`,
-        strongestDimension: strongestDimensionByTrait[strongest],
+        summary: `Bạn đang nghiêng về nhóm ${quizResult.topLabel}. Ma Holland/MBTI (${quizResult.hollandCode || "N/A"} / ${quizResult.mbtiCode || "N/A"}) cho thấy huong phat trien nen uu tien du an thuc te va ky nang cot loi.`,
+        strongestDimension:
+          strongestDimensionByTrait[strongest] || "Năng lực định hướng nghề nghiệp tổng hợp",
         recommendedTracks: quizResult.careers.slice(0, 3),
         nextActions: nextActions.slice(0, 4),
       },

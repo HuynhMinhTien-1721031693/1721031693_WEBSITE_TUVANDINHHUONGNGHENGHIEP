@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import express from "express";
 import { connectDatabase } from "./config/db.js";
 import adviceRouter from "./routes/advice.js";
+import authRouter from "./routes/auth.js";
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api", adviceRouter);
+app.use("/api", authRouter);
 
 connectDatabase()
   .then(() => {
