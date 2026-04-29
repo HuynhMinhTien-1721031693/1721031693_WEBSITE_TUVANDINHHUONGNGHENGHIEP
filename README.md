@@ -69,9 +69,18 @@ App URLs:
 
 ## API Endpoints (Backend)
 
-- `GET /api/health` - health check
-- `POST /api/career-advice` - generate AI career advice
-- `GET /api/history` - latest 20 advice records
+- Public:
+  - `GET /api/health` - health check
+  - `POST /api/auth/register` - register new user
+  - `POST /api/auth/login` - login and receive JWT
+- Protected (require `Authorization: Bearer <token>`):
+  - `GET /api/auth/me` - get current user profile
+  - `POST /api/career-advice` - generate AI career advice and save history
+  - `GET /api/history` - latest 20 advice records of current user
+  - `POST /api/test-results` - save test result of current user
+  - `GET /api/test-results` - list test result history of current user
+  - `POST /api/assessments` - save assessment detail of current user
+  - `GET /api/assessments` - list assessment history of current user
 
 Example request body for `/api/career-advice`:
 
@@ -89,12 +98,12 @@ Basic features:
 - Bài test trắc nghiệm tính cách / năng lực (RIASEC + MBTI mini): `/quiz`
 - Hiển thị kết quả và gợi ý nghề phù hợp: tại trang `/quiz` và `/dashboard`
 - Đăng ký / đăng nhập tài khoản (JWT): `/auth`
-- Lưu lịch sử kết quả: localStorage + MongoDB (`/api/test-results`) khi đã đăng nhập
+- Lưu lịch sử kết quả: localStorage + MongoDB (`/api/test-results`) khi đã đăng nhập (phụ thuộc trạng thái auth)
 
 Advanced features:
 
-- Đặt lịch tư vấn 1-1 với chuyên gia: `/booking` (form khởi tạo)
+- Đặt lịch tư vấn 1-1 với chuyên gia: `/booking` (form khởi tạo, chưa hoàn chỉnh)
 - Blog xu hướng nghề nghiệp: `/blog`
 - Tìm kiếm và lọc ngành nghề: trong `/careers`
-- Dashboard quản trị (admin): `/admin` (khung quản trị)
+- Dashboard quản trị (admin): `/admin` (khung quản trị, chỉ là skeleton)
 - Giao diện responsive: các trang dùng Tailwind grid/flex theo breakpoints

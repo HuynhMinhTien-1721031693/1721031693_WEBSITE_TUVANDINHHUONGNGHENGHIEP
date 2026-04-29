@@ -1,12 +1,12 @@
 import { Router } from "express";
 import { ChatHistory } from "../models/ChatHistory.js";
 import { TestResult } from "../models/TestResult.js";
-import { requireAuth } from "../middleware/auth.js";
+import { optionalAuth, requireAuth } from "../middleware/auth.js";
 import { generateCareerAdvice } from "../services/openai.js";
 
 const router = Router();
 
-router.post("/career-advice", requireAuth, async (req, res) => {
+router.post("/career-advice", optionalAuth, async (req, res) => {
   try {
     const message = String(req.body?.message || "").trim();
     if (!message) {
@@ -16,7 +16,7 @@ router.post("/career-advice", requireAuth, async (req, res) => {
     const advice = await generateCareerAdvice(message);
 
     await ChatHistory.create({
-      userId: req.user._id,
+      ...(req.user?._id ? { userId: req.user._id } : {}),
       message,
       ...advice,
     });
@@ -26,19 +26,6 @@ router.post("/career-advice", requireAuth, async (req, res) => {
     const message =
       error instanceof Error ? error.message : "Lỗi hệ thống khi tư vấn AI.";
     return res.status(500).json({ error: message });
-  }
-});
-
-router.get("/history", requireAuth, async (req, res) => {
-  try {
-    const history = await ChatHistory.find({ userId: req.user._id })
-      .sort({ createdAt: -1 })
-      .limit(20)
-      .lean();
-
-    res.json({ data: history });
-  } catch {
-    res.status(500).json({ error: "Không thể tải lịch sử tư vấn." });
   }
 });
 

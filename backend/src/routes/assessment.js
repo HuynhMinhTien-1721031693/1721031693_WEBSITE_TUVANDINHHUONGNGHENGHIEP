@@ -1,10 +1,9 @@
 import { Router } from "express";
-import { requireAuth } from "../middleware/auth.js";
 import { Assessment } from "../models/Assessment.js";
 
 const router = Router();
 
-router.post("/assessments", requireAuth, async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const payload = req.body || {};
 
@@ -29,7 +28,7 @@ router.post("/assessments", requireAuth, async (req, res) => {
   }
 });
 
-router.get("/assessments", requireAuth, async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const list = await Assessment.find({ userId: req.user._id })
       .sort({ createdAt: -1 })

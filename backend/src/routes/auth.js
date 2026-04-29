@@ -23,7 +23,7 @@ function signToken(user) {
   );
 }
 
-router.post("/auth/register", async (req, res) => {
+router.post("/register", async (req, res) => {
   try {
     const fullName = String(req.body?.fullName || "").trim();
     const email = String(req.body?.email || "")
@@ -58,7 +58,7 @@ router.post("/auth/register", async (req, res) => {
   }
 });
 
-router.post("/auth/login", async (req, res) => {
+router.post("/login", async (req, res) => {
   try {
     const email = String(req.body?.email || "")
       .trim()
@@ -90,7 +90,7 @@ router.post("/auth/login", async (req, res) => {
   }
 });
 
-router.get("/auth/me", requireAuth, async (req, res) => {
+router.get("/me", requireAuth, async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select("_id fullName email").lean();
     if (!user) {

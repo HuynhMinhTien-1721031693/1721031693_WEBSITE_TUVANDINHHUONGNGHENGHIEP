@@ -5,6 +5,8 @@ import { connectDatabase } from "./config/db.js";
 import adviceRouter from "./routes/advice.js";
 import assessmentRouter from "./routes/assessment.js";
 import authRouter from "./routes/auth.js";
+import historyRouter from "./routes/history.js";
+import { requireAuth as authMiddleware } from "./middleware/auth.js";
 
 dotenv.config();
 
@@ -19,8 +21,9 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api", adviceRouter);
-app.use("/api", authRouter);
-app.use("/api", assessmentRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/assessment", authMiddleware, assessmentRouter);
+app.use("/api/history", historyRouter);
 
 connectDatabase()
   .then(() => {
