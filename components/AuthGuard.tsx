@@ -13,7 +13,7 @@ export default function withAuthGuard<P extends object>(
 
     useEffect(() => {
       if (!isLoggedIn()) {
-        router.replace("/auth/login");
+        router.replace("/login");
         return;
       }
       setAuthorized(true);

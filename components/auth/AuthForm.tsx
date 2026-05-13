@@ -9,6 +9,17 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000"
 
 type Mode = "login" | "register";
 
+async function parseJsonSafely(response: Response): Promise<Record<string, unknown> | null> {
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) return null;
+
+  try {
+    return (await response.json()) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
 export default function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
@@ -34,16 +45,32 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         body: JSON.stringify(body),
       });
 
-      const payload = await response.json();
+      const payload = await parseJsonSafely(response);
       if (!response.ok) {
-        throw new Error(payload.error || "Xác thực thất bại.");
+        const apiError =
+          typeof payload?.error === "string"
+            ? payload.error
+            : typeof payload?.message === "string"
+              ? payload.message
+              : null;
+        throw new Error(apiError || "Xác thực thất bại.");
       }
 
-      saveAuthSession(payload.token, payload.user);
+      if (typeof payload?.token !== "string" || !payload?.user) {
+        throw new Error("Máy chủ trả về dữ liệu không hợp lệ.");
+      }
+
+      saveAuthSession(payload.token, payload.user as { id: string; fullName: string; email: string });
       setMessage(mode === "login" ? "Đăng nhập thành công." : "Đăng ký thành công.");
       router.push("/assessment");
       router.refresh();
     } catch (issue) {
+      if (issue instanceof TypeError) {
+        setError(
+          "Không kết nối được máy chủ backend. Hãy kiểm tra backend đang chạy tại http://localhost:4000.",
+        );
+        return;
+      }
       setError(issue instanceof Error ? issue.message : "Có lỗi xảy ra.");
     } finally {
       setLoading(false);

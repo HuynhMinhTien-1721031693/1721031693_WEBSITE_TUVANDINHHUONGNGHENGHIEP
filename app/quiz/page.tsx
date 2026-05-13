@@ -105,7 +105,7 @@ function QuizPage() {
 
     const token = getToken();
     if (!token) {
-      router.push("/auth/login");
+      router.push("/login");
       return;
     }
 
