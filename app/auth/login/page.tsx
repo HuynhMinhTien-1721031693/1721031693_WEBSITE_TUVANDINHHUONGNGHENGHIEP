@@ -3,9 +3,10 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { clientApiUrl, CLIENT_API_CONNECTION_HINT_VI, isLikelyNetworkFetchFailure } from "@/lib/api-base";
+import { apiFailureMessage, localizeAuthApiMessage, parseJsonSafely } from "@/lib/auth-api";
+import type { AuthUser } from "@/lib/auth-client";
 import { setToken, setUser } from "@/lib/auth-client";
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,28 +32,33 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${BASE_URL}/api/auth/login`, {
+      const response = await fetch(clientApiUrl("/api/auth/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: normalizedEmail, password }),
       });
 
-      const payload = await response.json();
+      const payload = await parseJsonSafely(response);
       if (!response.ok) {
-        throw new Error(payload?.error || "Đăng nhập thất bại.");
+        const msg = apiFailureMessage(payload);
+        throw new Error(localizeAuthApiMessage(msg || "Đăng nhập thất bại."));
       }
 
-      if (!payload?.token) {
+      if (!payload || typeof payload.token !== "string") {
         throw new Error("Thiếu token từ máy chủ.");
       }
 
       setToken(payload.token);
-      if (payload?.user) {
-        setUser(payload.user);
+      if (payload.user && typeof payload.user === "object") {
+        setUser(payload.user as AuthUser);
       }
       router.push("/dashboard");
     } catch (issue) {
-      setError(issue instanceof Error ? issue.message : "Có lỗi xảy ra.");
+      if (isLikelyNetworkFetchFailure(issue)) {
+        setError(CLIENT_API_CONNECTION_HINT_VI);
+      } else {
+        setError(issue instanceof Error ? issue.message : "Có lỗi xảy ra.");
+      }
     } finally {
       setLoading(false);
     }

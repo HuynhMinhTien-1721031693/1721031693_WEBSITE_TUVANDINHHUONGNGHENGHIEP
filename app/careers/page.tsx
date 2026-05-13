@@ -15,143 +15,143 @@ type CareerItem = {
 const careerData: CareerItem[] = [
   {
     id: "ky-su-co-khi",
-    name: "Ky su co khi",
+    name: "Kỹ sư cơ khí",
     riasec: "R",
-    description: "Thiet ke, van hanh va bao tri he thong may moc cong nghiep.",
-    salary: "15 - 30 trieu/thang",
+    description: "Thiết kế, vận hành và bảo trì hệ thống máy móc công nghiệp.",
+    salary: "15 - 30 triệu/tháng",
   },
   {
     id: "ky-thuat-vien-dien",
-    name: "Ky thuat vien dien - dien tu",
+    name: "Kỹ thuật viên điện - điện tử",
     riasec: "R",
-    description: "Lap dat, sua chua thiet bi dien va he thong dieu khien.",
-    salary: "10 - 22 trieu/thang",
+    description: "Lắp đặt, sửa chữa thiết bị điện và hệ thống điều khiển.",
+    salary: "10 - 22 triệu/tháng",
   },
   {
     id: "quan-ly-thi-cong",
-    name: "Quan ly thi cong xay dung",
+    name: "Quản lý thi công xây dựng",
     riasec: "R",
-    description: "Giam sat cong trinh, dieu phoi nhan su va tien do thi cong.",
-    salary: "14 - 28 trieu/thang",
+    description: "Giám sát công trình, điều phối nhân sự và tiến độ thi công.",
+    salary: "14 - 28 triệu/tháng",
   },
   {
     id: "data-analyst",
-    name: "Chuyen vien phan tich du lieu",
+    name: "Chuyên viên phân tích dữ liệu",
     riasec: "I",
-    description: "Phan tich du lieu kinh doanh de ho tro ra quyet dinh.",
-    salary: "15 - 35 trieu/thang",
+    description: "Phân tích dữ liệu kinh doanh để hỗ trợ ra quyết định.",
+    salary: "15 - 35 triệu/tháng",
   },
   {
     id: "lap-trinh-ai",
-    name: "Ky su AI",
+    name: "Kỹ sư AI",
     riasec: "I",
-    description: "Xay dung mo hinh AI/ML cho bai toan doanh nghiep.",
-    salary: "20 - 50 trieu/thang",
+    description: "Xây dựng mô hình AI/ML cho bài toán doanh nghiệp.",
+    salary: "20 - 50 triệu/tháng",
   },
   {
     id: "nghien-cuu-vien",
-    name: "Nghien cuu vien",
+    name: "Nghiên cứu viên",
     riasec: "I",
-    description: "Thuc hien de tai nghien cuu trong khoa hoc, xa hoi hoac y te.",
-    salary: "12 - 30 trieu/thang",
+    description: "Thực hiện đề tài nghiên cứu trong khoa học, xã hội hoặc y tế.",
+    salary: "12 - 30 triệu/tháng",
   },
   {
     id: "graphic-designer",
     name: "Graphic Designer",
     riasec: "A",
-    description: "Thiet ke an pham thuong hieu, truyen thong va digital.",
-    salary: "10 - 25 trieu/thang",
+    description: "Thiết kế ấn phẩm thương hiệu, truyền thông và digital.",
+    salary: "10 - 25 triệu/tháng",
   },
   {
     id: "ux-ui",
     name: "UX/UI Designer",
     riasec: "A",
-    description: "Thiet ke trai nghiem va giao dien cho san pham so.",
-    salary: "14 - 35 trieu/thang",
+    description: "Thiết kế trải nghiệm và giao diện cho sản phẩm số.",
+    salary: "14 - 35 triệu/tháng",
   },
   {
     id: "content-creator",
     name: "Content Creator",
     riasec: "A",
-    description: "San xuat noi dung sang tao tren nen tang so.",
-    salary: "8 - 30 trieu/thang",
+    description: "Sản xuất nội dung sáng tạo trên nền tảng số.",
+    salary: "8 - 30 triệu/tháng",
   },
   {
     id: "giao-vien",
-    name: "Giao vien",
+    name: "Giáo viên",
     riasec: "S",
-    description: "Giang day va huong dan hoc sinh phat trien kien thuc ky nang.",
-    salary: "8 - 20 trieu/thang",
+    description: "Giảng dạy và hướng dẫn học sinh phát triển kiến thức, kỹ năng.",
+    salary: "8 - 20 triệu/tháng",
   },
   {
     id: "tu-van-tam-ly",
-    name: "Chuyen vien tu van tam ly",
+    name: "Chuyên viên tư vấn tâm lý",
     riasec: "S",
-    description: "Ho tro tam ly, dinh huong hoc tap va nghe nghiep.",
-    salary: "12 - 25 trieu/thang",
+    description: "Hỗ trợ tâm lý, định hướng học tập và nghề nghiệp.",
+    salary: "12 - 25 triệu/tháng",
   },
   {
     id: "nhan-su",
-    name: "Chuyen vien nhan su",
+    name: "Chuyên viên nhân sự",
     riasec: "S",
-    description: "Tuyen dung, dao tao va phat trien nguon nhan luc doanh nghiep.",
-    salary: "12 - 30 trieu/thang",
+    description: "Tuyển dụng, đào tạo và phát triển nguồn nhân lực doanh nghiệp.",
+    salary: "12 - 30 triệu/tháng",
   },
   {
     id: "sales-manager",
-    name: "Quan ly kinh doanh",
+    name: "Quản lý kinh doanh",
     riasec: "E",
-    description: "Lap ke hoach doanh so, lanh dao doi ngu ban hang.",
-    salary: "18 - 45 trieu/thang",
+    description: "Lập kế hoạch doanh số, lãnh đạo đội ngũ bán hàng.",
+    salary: "18 - 45 triệu/tháng",
   },
   {
     id: "marketing-manager",
-    name: "Quan ly marketing",
+    name: "Quản lý marketing",
     riasec: "E",
-    description: "Xay dung chien luoc tiep thi va phat trien thuong hieu.",
-    salary: "18 - 50 trieu/thang",
+    description: "Xây dựng chiến lược tiếp thị và phát triển thương hiệu.",
+    salary: "18 - 50 triệu/tháng",
   },
   {
     id: "chuyen-vien-tu-van-tai-chinh",
-    name: "Tu van tai chinh",
+    name: "Tư vấn tài chính",
     riasec: "E",
-    description: "Tu van danh muc dau tu va ke hoach tai chinh ca nhan.",
-    salary: "15 - 40 trieu/thang",
+    description: "Tư vấn danh mục đầu tư và kế hoạch tài chính cá nhân.",
+    salary: "15 - 40 triệu/tháng",
   },
   {
     id: "ke-toan",
-    name: "Ke toan tong hop",
+    name: "Kế toán tổng hợp",
     riasec: "C",
-    description: "Quan ly so sach, bao cao tai chinh va khai bao thue.",
-    salary: "10 - 25 trieu/thang",
+    description: "Quản lý sổ sách, báo cáo tài chính và khai báo thuế.",
+    salary: "10 - 25 triệu/tháng",
   },
   {
     id: "kiem-toan",
-    name: "Kiem toan vien",
+    name: "Kiểm toán viên",
     riasec: "C",
-    description: "Kiem tra tinh minh bach tai chinh cua doanh nghiep.",
-    salary: "14 - 35 trieu/thang",
+    description: "Kiểm tra tính minh bạch tài chính của doanh nghiệp.",
+    salary: "14 - 35 triệu/tháng",
   },
   {
     id: "data-admin",
-    name: "Chuyen vien quan tri du lieu",
+    name: "Chuyên viên quản trị dữ liệu",
     riasec: "C",
-    description: "Quan ly, chuan hoa va bao tri he thong du lieu doanh nghiep.",
-    salary: "12 - 28 trieu/thang",
+    description: "Quản lý, chuẩn hóa và bảo trì hệ thống dữ liệu doanh nghiệp.",
+    salary: "12 - 28 triệu/tháng",
   },
   {
     id: "duoc-si",
-    name: "Duoc si",
+    name: "Dược sĩ",
     riasec: "I",
-    description: "Nghien cuu, tu van va quan ly su dung thuoc an toan.",
-    salary: "10 - 25 trieu/thang",
+    description: "Nghiên cứu, tư vấn và quản lý sử dụng thuốc an toàn.",
+    salary: "10 - 25 triệu/tháng",
   },
   {
     id: "kien-truc-su",
-    name: "Kien truc su",
+    name: "Kiến trúc sư",
     riasec: "A",
-    description: "Thiet ke cong trinh dam bao tham my va cong nang.",
-    salary: "15 - 40 trieu/thang",
+    description: "Thiết kế công trình đảm bảo thẩm mỹ và công năng.",
+    salary: "15 - 40 triệu/tháng",
   },
 ];
 
@@ -174,15 +174,15 @@ export default function CareersPage() {
     <div className="px-4 py-8 md:px-6">
       <div className="mx-auto w-full max-w-6xl space-y-6">
         <section className="rounded-3xl bg-white p-6 shadow ring-1 ring-black/5 md:p-8">
-          <h1 className="text-3xl font-bold text-[#0F2044]">20 nganh nghe pho bien tai Viet Nam</h1>
+          <h1 className="text-3xl font-bold text-[#0F2044]">20 ngành nghề phổ biến tại Việt Nam</h1>
           <p className="mt-2 text-slate-600">
-            Tim kiem nganh nghe theo tu khoa va loc theo nhom tinh cach RIASEC.
+            Tìm kiếm ngành nghề theo từ khóa và lọc theo nhóm tính cách RIASEC.
           </p>
           <div className="mt-4 grid gap-3 md:grid-cols-3">
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Tim theo ten nganh..."
+              placeholder="Tìm theo tên ngành..."
               className="h-11 rounded-xl border border-slate-200 px-3 outline-none ring-[#F5A623]/40 focus:ring"
             />
             <select
@@ -190,7 +190,7 @@ export default function CareersPage() {
               onChange={(event) => setGroup(event.target.value as "all" | RiasecGroup)}
               className="h-11 rounded-xl border border-slate-200 bg-white px-3 outline-none ring-[#F5A623]/40 focus:ring"
             >
-              <option value="all">Tat ca nhom RIASEC</option>
+              <option value="all">Tất cả nhóm RIASEC</option>
               <option value="R">R - Realistic</option>
               <option value="I">I - Investigative</option>
               <option value="A">A - Artistic</option>
@@ -199,27 +199,35 @@ export default function CareersPage() {
               <option value="C">C - Conventional</option>
             </select>
             <div className="flex items-center text-sm text-slate-600">
-              Tim thay <span className="mx-1 font-semibold text-[#0F2044]">{filtered.length}</span> nganh nghe
+              Tìm thấy{" "}
+              <span className="mx-1 font-semibold text-[#0F2044]">{filtered.length}</span> ngành nghề
             </div>
           </div>
         </section>
 
-        <section className="grid gap-4 md:grid-cols-2">
-          {filtered.map((career) => (
-            <article key={career.id} className="rounded-2xl bg-white p-5 shadow ring-1 ring-black/5">
-              <div className="flex items-start justify-between gap-3">
-                <h2 className="text-xl font-semibold text-[#0F2044]">{career.name}</h2>
-                <span className="rounded-full bg-[#F5A623]/20 px-2.5 py-1 text-xs font-semibold text-[#0F2044]">
-                  {career.riasec}
-                </span>
-              </div>
-              <p className="mt-3 text-slate-700">{career.description}</p>
-              <p className="mt-3 text-sm font-semibold text-slate-600">
-                Muc luong trung binh: <span className="text-[#0F2044]">{career.salary}</span>
-              </p>
-            </article>
-          ))}
-        </section>
+        {filtered.length === 0 ? (
+          <section className="rounded-2xl bg-white p-8 text-center shadow ring-1 ring-black/5">
+            <p className="text-lg font-semibold text-[#0F2044]">Không tìm thấy ngành nghề phù hợp</p>
+            <p className="mt-2 text-sm text-slate-600">Thử đổi từ khóa hoặc chọn lại nhóm RIASEC.</p>
+          </section>
+        ) : (
+          <section className="grid gap-4 md:grid-cols-2">
+            {filtered.map((career) => (
+              <article key={career.id} className="rounded-2xl bg-white p-5 shadow ring-1 ring-black/5">
+                <div className="flex items-start justify-between gap-3">
+                  <h2 className="text-xl font-semibold text-[#0F2044]">{career.name}</h2>
+                  <span className="rounded-full bg-[#F5A623]/20 px-2.5 py-1 text-xs font-semibold text-[#0F2044]">
+                    {career.riasec}
+                  </span>
+                </div>
+                <p className="mt-3 text-slate-700">{career.description}</p>
+                <p className="mt-3 text-sm font-semibold text-slate-600">
+                  Mức lương trung bình: <span className="text-[#0F2044]">{career.salary}</span>
+                </p>
+              </article>
+            ))}
+          </section>
+        )}
       </div>
     </div>
   );

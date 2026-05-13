@@ -3,9 +3,10 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { clientApiUrl, CLIENT_API_CONNECTION_HINT_VI, isLikelyNetworkFetchFailure } from "@/lib/api-base";
+import { apiFailureMessage, localizeAuthApiMessage, parseJsonSafely } from "@/lib/auth-api";
+import type { AuthUser } from "@/lib/auth-client";
 import { setToken, setUser } from "@/lib/auth-client";
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -42,39 +43,45 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const registerResponse = await fetch(`${BASE_URL}/api/auth/register`, {
+      const registerResponse = await fetch(clientApiUrl("/api/auth/register"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: trimmedName, email: normalizedEmail, password }),
       });
 
-      const registerPayload = await registerResponse.json();
+      const registerPayload = await parseJsonSafely(registerResponse);
       if (!registerResponse.ok) {
-        throw new Error(registerPayload?.error || "Đăng ký thất bại.");
+        const msg = apiFailureMessage(registerPayload);
+        throw new Error(localizeAuthApiMessage(msg || "Đăng ký thất bại."));
       }
 
-      const loginResponse = await fetch(`${BASE_URL}/api/auth/login`, {
+      const loginResponse = await fetch(clientApiUrl("/api/auth/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: normalizedEmail, password }),
       });
 
-      const loginPayload = await loginResponse.json();
+      const loginPayload = await parseJsonSafely(loginResponse);
       if (!loginResponse.ok) {
-        throw new Error(loginPayload?.error || "Không thể tự động đăng nhập.");
+        const msg = apiFailureMessage(loginPayload);
+        throw new Error(localizeAuthApiMessage(msg || "Không thể tự động đăng nhập."));
       }
 
-      if (!loginPayload?.token) {
+      if (!loginPayload || typeof loginPayload.token !== "string") {
         throw new Error("Thiếu token từ máy chủ.");
       }
 
       setToken(loginPayload.token);
-      if (loginPayload?.user) {
-        setUser(loginPayload.user);
+      if (loginPayload.user && typeof loginPayload.user === "object") {
+        setUser(loginPayload.user as AuthUser);
       }
       router.push("/dashboard");
     } catch (issue) {
-      setError(issue instanceof Error ? issue.message : "Có lỗi xảy ra.");
+      if (isLikelyNetworkFetchFailure(issue)) {
+        setError(CLIENT_API_CONNECTION_HINT_VI);
+      } else {
+        setError(issue instanceof Error ? issue.message : "Có lỗi xảy ra.");
+      }
     } finally {
       setLoading(false);
     }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import withAuthGuard from "@/components/AuthGuard";
+import { clientApiUrl } from "@/lib/api-base";
 import { clearAuth, getToken, getUser } from "@/lib/auth-client";
 
 type TraitKey = "R" | "I" | "A" | "S" | "E" | "C";
@@ -28,8 +29,6 @@ type DashboardUser = {
   name: string;
   email: string;
 };
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
 const TRAIT_META: Array<{ key: TraitKey; label: string; colorClass: string }> = [
   { key: "R", label: "Realistic", colorClass: "bg-sky-500" },
@@ -98,8 +97,8 @@ function DashboardPage() {
 
       try {
         const [assessmentResponse, historyResponse] = await Promise.all([
-          fetch(`${BASE_URL}/api/assessment/my`, { headers }),
-          fetch(`${BASE_URL}/api/history`, { headers }),
+          fetch(clientApiUrl("/api/assessment/my"), { headers }),
+          fetch(clientApiUrl("/api/history"), { headers }),
         ]);
 
         if (assessmentResponse.ok) {

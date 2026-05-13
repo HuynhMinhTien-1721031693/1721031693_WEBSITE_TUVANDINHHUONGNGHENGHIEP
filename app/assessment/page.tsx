@@ -5,8 +5,7 @@ import { useState } from "react";
 import { assessmentById, assessmentDefinitions, AssessmentType } from "@/lib/assessment/data";
 import { AnswerMap, AssessmentResult, evaluateAssessment } from "@/lib/assessment/engine";
 import { authFetch } from "@/lib/auth-client";
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
+import { clientApiUrl } from "@/lib/api-base";
 
 export default function AssessmentPage() {
   const [activeTestId, setActiveTestId] = useState<AssessmentType>("mbti");
@@ -35,7 +34,7 @@ export default function AssessmentPage() {
     setError(null);
 
     try {
-      const response = await authFetch(`${BASE_URL}/api/assessment`, {
+      const response = await authFetch(clientApiUrl("/api/assessment"), {
         method: "POST",
         body: JSON.stringify({
           answers: definition.questions.map((item, index) => ({

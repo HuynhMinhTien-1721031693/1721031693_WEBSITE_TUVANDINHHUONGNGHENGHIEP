@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { authFetch, getAuthToken } from "@/lib/auth-client";
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
+import { clientApiUrl } from "@/lib/api-base";
 
 type AdviceHistory = {
   _id: string;
@@ -36,8 +35,8 @@ export default function HistoryPage() {
 
       try {
         const [chatRes, assessmentRes] = await Promise.all([
-          authFetch(`${BASE_URL}/api/history`),
-          authFetch(`${BASE_URL}/api/assessment/my`),
+          authFetch(clientApiUrl("/api/history")),
+          authFetch(clientApiUrl("/api/assessment/my")),
         ]);
 
         const chatPayload = await chatRes.json();

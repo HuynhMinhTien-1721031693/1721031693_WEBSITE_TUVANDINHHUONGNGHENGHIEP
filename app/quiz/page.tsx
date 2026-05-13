@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { clientApiUrl } from "@/lib/api-base";
 import { getToken } from "@/lib/auth-client";
 import withAuthGuard from "@/components/AuthGuard";
 
@@ -75,8 +76,6 @@ const SCALE_OPTIONS = [
   { value: 5, label: "Rất thích" },
 ];
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
-
 function QuizPage() {
   const router = useRouter();
   const [answers, setAnswers] = useState<Record<string, number>>({});
@@ -116,7 +115,7 @@ function QuizPage() {
 
     setLoading(true);
     try {
-      const response = await fetch(`${BASE_URL}/api/assessment`, {
+      const response = await fetch(clientApiUrl("/api/assessment"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
